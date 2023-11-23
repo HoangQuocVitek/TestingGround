@@ -27,12 +27,6 @@ app.get('/get', (req, res) => {
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
-app.get('/formular', (req, res) => {
-  res.sendFile(__dirname + '/public/formular.html');
-});
-app.get('/login', (req, res) => {
-  res.sendFile(__dirname + '/public/login.html');
-});
 
 //zajistuje chat
 io.on('connection', (socket) => {
