@@ -1,5 +1,4 @@
 
-// Function to toggle password visibility for a specific field
 function togglePasswordVisibility(passwordFieldId, checkboxId) {
   const passwordField = document.getElementById(passwordFieldId);
   const checkbox = document.getElementById(checkboxId);

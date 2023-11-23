@@ -9,19 +9,13 @@
 </head>
 
 <body>
-  <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
+    <a    href="http://localhost/formular"> <button class="login-button">Registrace</button></a>
     <div class="center-container">
         <form>
             <div class="form-group">
                 <label for="fname">Uživatelské jméno:</label>
                 <input type="text" id="fname" name="fname" required>
             </div>
-
-            <div class="form-group">
-                <label for="lname">Email:</label>
-                <input type="text" id="lname" name="lname" required>
-            </div>
-
             <form>
                 <div class="form-group">
                     <label for="password" class="show-password-label">Heslo:</label>
@@ -30,18 +24,11 @@
                     </div>
                     <input type="checkbox" id="showPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('password')">
                 </div>
-            
-                <div class="form-group">
-                    <label for="confirmPassword" class="show-password-label">Potvrdit heslo:</label>
-                    <input type="password" placeholder="password" id="confirmPassword" name="confirmPassword" required maxlength="30">
-                    <input type="checkbox" id="showConfirmPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('confirmPassword')">
-                </div>
             </form>
             
         <div class="button-container">
-            <button class="btn">Registrovat se</button>
+            <button class="btn">Přihlásit se</button>
         </div>
     </div>
        <script src="index.js"></script>
-</body>
 </html>
