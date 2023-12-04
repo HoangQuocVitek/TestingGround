@@ -12,11 +12,8 @@
     
   </style>
 </head>
-<body>
-  <form id="formular" action="formular">
-    <input type="submit" value="Registrace" />
-</form>
- 
+<body style="background-color:aquamarine">
+
   <ul id="messages"></ul>
   <form id="chat-form">
     <input id="message-input" autocomplete="off" /><button>Poslat</button>
@@ -42,6 +39,11 @@
       li.textContent = message;
       messages.appendChild(li);
     });
+    
   </script>
+  <a    href="http://localhost/registrace"> <button class="login-button">Registrace</button></a>
+  <div class="center-container">
+    <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
+    <div class="center-container">
 </body>
 </html>

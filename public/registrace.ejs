@@ -9,11 +9,51 @@
 </head>
 
 <body>
+    <script>
+        function 
+        togglePasswordVisibility(inputId) {
+                  var passwordInput = document.getElementById(inputId);
+                  if (passwordInput.type === "password") {
+                      passwordInput.type = "text";
+                  } else {
+                      passwordInput.type = "password";
+                  }
+              }
+      
+              function validatePassword() {
+  var password = document.getElementById('password').value;
+  var confirmPassword = document.getElementById('confirmPassword').value;
+  var email = document.getElementById('lname').value;
+  var errorDiv = document.getElementById('passwordError');
+
+  if (password !== confirmPassword) {
+    errorDiv.innerText = 'Passwords do not match';
+    return false; // Prevent form submission
+  }
+
+  if (!email.includes('@gmail.com')) {
+    errorDiv.innerText = 'Please enter a valid Gmail address';
+    return false; // Prevent form submission
+  }
+
+  // Clear any previous error message
+  errorDiv.innerText = '';
+  return true; // Allow form submission
+}
+      </script>
+      
+
+
+
+
+
+
+
   <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
     <div class="center-container">
        
        
-        <form form action="/vitek.hoang" method="POST">
+        <form action="/vitek.hoang" method="POST" onsubmit="return validatePassword()">
             <div class="form-group">
                 <label for="fname">Uživatelské jméno:</label>
                 <input type="text" id="fname" name="username" required>
@@ -36,12 +76,18 @@
                     <input type="password" placeholder="password" id="confirmPassword" name="confirmPassword" required maxlength="30">
                     <input type="checkbox" id="showConfirmPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('confirmPassword')">
                 </div>
-            </form>
             
-        <div class="button-container">
-            <button class="btn" type="submit">Registrovat se</button>
-        </div>
-    </div>
-       <script src="index.js"></script>
+                <div id="passwordError" style="color: red;"></div>
+
+                <div class="button-container">
+            <div class="button-container">
+                <button class="btn" type="submit">Registrovat se</button>
+            </div>
+    </form>
+
+
+
+
+</div>
 </body>
 </html>
