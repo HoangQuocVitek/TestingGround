@@ -60,7 +60,7 @@ app.post('/vitek.hoang', function (request, response, next) {
       return response.status(500).send('Error inserting into the database');
     }
     console.log('User inserted into the database');
-    response.send('User inserted into the database');
+    response.redirect('/login');
   });
 });
 
@@ -69,10 +69,59 @@ app.get('/registrace', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  res.render('login');
+  const username = req.session.username || '';
+  res.render('login', { username });
 });
+
+app.get('/', (req, res) => {
+  const username = req.session.username || '';
+  res.render('index', { username }); // Assuming your EJS file is named index.ejs
+});
+
+
+
 
 const port = 80;
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+});
+
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Validate credentials against the database
+  const sql = `SELECT * FROM userdatabase WHERE username = ? AND password = ?`;
+  con.query(sql, [username, password], (error, results, fields) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).send('Error while authenticating');
+    }
+
+    if (results.length > 0) {
+      // Successful login: Create a session
+      req.session.authenticated = true;
+      req.session.username = username; // Store the username in the session
+      console.log(`User ${username} logged in`);
+
+      // Redirect to a dashboard or home upon successful login
+      res.redirect('/'); // Change this to your actual dashboard route
+    } else {
+      // Invalid credentials: Redirect back to login
+      res.redirect('/login'); // Change this to your login route
+    }
+  });
+});
+
+
+io.on('connection', (socket) => {
+  console.log('New user connected');
+
+  socket.on('chat message', (data) => {
+    console.log('Received message: ' + data.message);
+    io.emit('chat message', { message: data.message, username: data.username });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });

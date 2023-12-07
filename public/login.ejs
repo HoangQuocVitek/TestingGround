@@ -9,25 +9,29 @@
 </head>
 
 <body>
-    <a    href="http://localhost/registrace"> <button class="login-button">Registrace</button></a>
+    <!-- Your registration button -->
+    <a href="http://localhost/registrace"><button class="login-button">Registrace</button></a>
+    
+    <!-- Login form -->
     <div class="center-container">
-        <form>
+        <form action="/login" method="POST">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required value=username>
             <div class="form-group">
-                <label for="fname">Uživatelské jméno:</label>
-                <input type="text" id="fname" name="fname" required>
-            </div>
-                <div class="form-group">
-                    <label for="password" class="show-password-label">Heslo:</label>
-                    <div class="password-input-container">
-                        <input type="password" placeholder="password" id="password" name="password" required maxlength="30">
-                    </div>
-                    <input type="checkbox" id="showPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('password')">
+                <label for="password" class="show-password-label">Heslo:</label>
+                <div class="password-input-container">
+                    <input type="password" placeholder="password" id="password" name="password" required maxlength="30">
                 </div>
-            </form>
-            
-        <div class="button-container">
-            <button class="btn">Přihlásit se</button>
-        </div>
+                <input type="checkbox" id="showPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('password')">
+            </div>
+            <div class="button-container">
+                <button type="submit" class="btn">Přihlásit se</button> <!-- Set button type to 'submit' -->
+            </div>
+        </form>
     </div>
-       <script src="index.js"></script>
+
+    <script src="index.js">
+
+    </script>
+</body>
 </html>

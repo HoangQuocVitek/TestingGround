@@ -13,7 +13,6 @@
   </style>
 </head>
 <body style="background-color:aquamarine">
-
   <ul id="messages"></ul>
   <form id="chat-form">
     <input id="message-input" autocomplete="off" /><button>Poslat</button>
@@ -22,28 +21,47 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
     const form = document.getElementById('chat-form');
     const input = document.getElementById('message-input');
     const messages = document.getElementById('messages');
-
+  
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const message = input.value;
-      socket.emit('chat message', message);
+      const username = '<%= username %>'; // Retrieve username from server-side
+      socket.emit('chat message', { message, username });
       input.value = '';
     });
-
-    socket.on('chat message', (message) => {
+  
+    socket.on('chat message', (data) => {
+      const { message, username } = data;
       const li = document.createElement('li');
-      li.textContent = message;
+      li.textContent = `${username}: ${message}`;
       messages.appendChild(li);
     });
-    
   </script>
-  <a    href="http://localhost/registrace"> <button class="login-button">Registrace</button></a>
+
+<a    href="http://localhost/registrace"> <button class="login-button">Registrace</button></a>
+<div class="center-container">
+  <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
   <div class="center-container">
-    <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
-    <div class="center-container">
+  <script>
+    const checkLocalhost = async () => {
+        try {
+            const response = await fetch('http://localhost');
+            if (!response.ok) {
+                window.location.replace('http://192.168.11.201');
+            }
+        } catch (error) {
+            console.error('Error checking localhost:', error);
+            window.location.replace('http://192.168.11.201');
+        }
+    };
+
+    checkLocalhost();
+</script>
+</body>
+</html>
+
 </body>
 </html>
