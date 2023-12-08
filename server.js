@@ -33,19 +33,6 @@ con.connect(function(err) {
   console.log('Connected to MySQL!');
 });
 
-io.on('connection', (socket) => {
-  console.log('New user connected');
-
-  socket.on('chat message', (message) => {
-    console.log('Received message: ' + message);
-    io.emit('chat message', message);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
-});
-
 app.post('/vitek.hoang', function (request, response, next) {
   const { username, email, password, confirmPassword } = request.body;
 

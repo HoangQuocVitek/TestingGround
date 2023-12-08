@@ -3,20 +3,92 @@
 <head>
   <title>chat chat</title>
   <style>
-    #messages { list-style-type: none; margin: 0; padding: 0; }
-    #messages li { margin-bottom: 10px; }
-    #formular {
+     body {
     display: flex;
-    justify-content: flex-end;
-}
-    
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+
+  #chat-container {
+    height: 70%;
+    max-height: 70%; /* Set maximum height */
+    width: 80%;
+    border: 1px solid #ccc;
+    overflow: auto; /* Enable both vertical and horizontal scrollbars */
+    margin-bottom: 20px;
+    padding: 10px;
+  }
+
+  #messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column-reverse; /* Reverses the order of items */
+  }
+
+    #chat-form {
+      display: flex;
+      width: 100%;
+      align-items: flex-end; /* Aligns the input to the bottom */
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 5px;
+      margin-right: 5px;
+    }
+
+    button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .login-button {
+      margin: 5px;
+    }
+
+    .center-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .formular-container {
+      display: flex;
+      justify-content: flex-end;
+      width: 80%;
+    }
+
+    .formular-container button {
+      margin-left: 10px; /* Adds space between input and button */
+    }
   </style>
 </head>
-<body style="background-color:aquamarine">
-  <ul id="messages"></ul>
-  <form id="chat-form">
-    <input id="message-input" autocomplete="off" /><button>Poslat</button>
-  </form>
+<body>
+  <div id="chat-container">
+    <ul id="messages"></ul>
+  </div>
+
+  <div class="formular-container">
+    <form id="chat-form">
+      <input id="message-input" autocomplete="off" />
+      <button type="submit">Poslat</button>
+    </form>
+  </div>
+
+  <a href="http://192.168.11.201/registrace">
+    <button class="login-button">Registrace</button>
+  </a>
+
+  <div class="center-container">
+    <a href="http://192.168.11.201/login">
+      <button class="login-button">Přihlásit se</button>
+    </a>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -28,7 +100,7 @@
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const message = input.value;
-      const username = '<%= username %>'; // Retrieve username from server-side
+      const username = '<%= username %>';
       socket.emit('chat message', { message, username });
       input.value = '';
     });
@@ -37,31 +109,15 @@
       const { message, username } = data;
       const li = document.createElement('li');
       li.textContent = `${username}: ${message}`;
-      messages.appendChild(li);
+  
+      // Insert new messages at the top of the list
+      messages.insertBefore(li, messages.firstChild);
     });
   </script>
+  
 
-<a    href="http://localhost/registrace"> <button class="login-button">Registrace</button></a>
-<div class="center-container">
-  <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
-  <div class="center-container">
-  <script>
-    const checkLocalhost = async () => {
-        try {
-            const response = await fetch('http://localhost');
-            if (!response.ok) {
-                window.location.replace('http://192.168.11.201');
-            }
-        } catch (error) {
-            console.error('Error checking localhost:', error);
-            window.location.replace('http://192.168.11.201');
-        }
-    };
+ 
 
-    checkLocalhost();
-</script>
-</body>
-</html>
 
 </body>
 </html>
