@@ -1,71 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>chat chat</title>
+  <title>chit chat
+
+  </title>
   <style>
-     body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    font-family: Arial, sans-serif;
-  }
+ body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color:black
+}
 
-  #chat-container {
-    height: 70%;
-    max-height: 70%; /* Set maximum height */
-    width: 80%;
-    border: 1px solid #ccc;
-    overflow: auto; /* Enable both vertical and horizontal scrollbars */
-    margin-bottom: 20px;
-    padding: 10px;
-  }
+#chat-container {
+  height: 70%;
+  max-height: 70%; /* Set maximum height */
+  width: 80%;
+  border: 1px solid #ccc;
+  overflow: auto; /* Enable both vertical and horizontal scrollbars */
+  margin-bottom: 20px;
+  padding: 10px;
+  color:white ;
+}
 
-  #messages {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    margin-bottom: 30px;
-    display: flex;
-    flex-direction: column-reverse; /* Reverses the order of items */
-  }
+#messages {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column-reverse; 
+  max-height: 100%;
+  overflow-y: auto; 
+}
 
-    #chat-form {
-      display: flex;
-      width: 100%;
-      align-items: flex-end; /* Aligns the input to the bottom */
-    }
+#chat-form {
+  display: flex;
+  width: 100%;
+  align-items: flex-end; /* Aligns the input to the bottom */
+}
 
-    #message-input {
-      flex: 1;
-      padding: 5px;
-      margin-right: 5px;
-    }
+#message-input {
+  flex: 1;
+  padding: 5px;
+  margin-right: 5px;
+}
 
-    button {
-      padding: 5px 10px;
-      cursor: pointer;
-    }
+button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
 
-    .login-button {
-      margin: 5px;
-    }
+.login-button {
+  margin: 5px;
+}
 
-    .center-container {
-      display: flex;
-      justify-content: center;
-    }
+.center-container {
+  display: flex;
+  justify-content: center;
+}
 
-    .formular-container {
-      display: flex;
-      justify-content: flex-end;
-      width: 80%;
-    }
+.formular-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 80%;
+}
 
-    .formular-container button {
-      margin-left: 10px; /* Adds space between input and button */
-    }
+.formular-container button {
+  margin-left: 10px; /* Adds space between input and button */
+}
+
   </style>
 </head>
 <body>
@@ -75,7 +81,7 @@
 
   <div class="formular-container">
     <form id="chat-form">
-      <input id="message-input" autocomplete="off" />
+      <input id="message-input" autocomplete="off" required maxlength="100" />
       <button type="submit">Poslat</button>
     </form>
   </div>
@@ -96,14 +102,20 @@
     const form = document.getElementById('chat-form');
     const input = document.getElementById('message-input');
     const messages = document.getElementById('messages');
-  
+ 
+ 
     form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const message = input.value;
-      const username = '<%= username %>';
-      socket.emit('chat message', { message, username });
-      input.value = '';
-    });
+  e.preventDefault();
+  const message = input.value.trim(); // Trim leading/trailing whitespace
+  const username = '<%= username %>';
+
+  if (message.length > 0) {
+    socket.emit('chat message', { message, username });
+    input.value = '';
+  } else {
+    alert('Please type at least one word.');
+  }
+});
   
     socket.on('chat message', (data) => {
       const { message, username } = data;
@@ -113,6 +125,36 @@
       // Insert new messages at the top of the list
       messages.insertBefore(li, messages.firstChild);
     });
+
+    let lastMessageSentTime = 0;
+const cooldownDuration = 5000; // 5 seconds in milliseconds
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault(); // Prevent default form submission behavior
+
+  const currentTime = new Date().getTime();
+
+  if (currentTime - lastMessageSentTime >= cooldownDuration) {
+    const message = input.value.trim(); // Trim leading/trailing whitespace
+    const username = '<%= username %>';
+
+    if (message.length > 0) {
+      socket.emit('chat message', { message, username });
+      input.value = '';
+      lastMessageSentTime = currentTime;
+    } 
+  } else if (input.value.trim().length > 0) {
+    const timeLeft = (cooldownDuration - (currentTime - lastMessageSentTime)) / 1000;
+    alert(`Please wait ${timeLeft.toFixed(1)} seconds before sending another message.`);
+  }
+});
+
+
+
+
+
+
+    
   </script>
   
 
