@@ -5,35 +5,40 @@
 
   </title>
   <style>
- body {
+body {
   display: flex;
   flex-direction: column;
   align-items: center;
   height: 100vh;
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color:black
+  background-color: #363636;
 }
 
 #chat-container {
+  display: flex;
+  flex-direction: column-reverse; /* Reverse the order of messages */
   height: 70%;
   max-height: 70%; /* Set maximum height */
   width: 80%;
   border: 1px solid #ccc;
-  overflow: auto; /* Enable both vertical and horizontal scrollbars */
+  overflow-y: auto; /* Enable vertical scrollbar only */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
   margin-bottom: 20px;
   padding: 10px;
-  color:white ;
+  color: white;
 }
+
+
 
 #messages {
   list-style-type: none;
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column-reverse; 
-  max-height: 100%;
-  overflow-y: auto; 
+  flex-direction: column-reverse; /* Reverses the order of items */
+  max-height: 100%; /* Adjust this to fit your layout */
+  overflow-y: auto; /* Enable vertical scrollbar */
 }
 
 #chat-form {
@@ -53,14 +58,28 @@ button {
   cursor: pointer;
 }
 
-.login-button {
-  margin: 5px;
-}
-
 .center-container {
   display: flex;
   justify-content: center;
+  float:right;
 }
+
+.button-container {
+  display: inline-flex; /* Display buttons inline */
+}
+
+.right-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 80%;
+  margin-bottom: 20px; /* To add space between the buttons and the chat container */
+}
+
+.login-button {
+  margin: 5px;
+  /* Add other styles as needed */
+}
+
 
 .formular-container {
   display: flex;
@@ -74,80 +93,94 @@ button {
 
   </style>
 </head>
+
+
+
+
+
+
 <body>
+
+
+
+  <div class="right-container">
+    <a href="http://192.168.11.201/registrace">
+      <button class="login-button">Registrace</button>
+    </a>
+    <a href="http://192.168.11.201/login">
+      <button class="login-button">Přihlásit se</button>
+    </a>
+  </div>
+
+
+
   <div id="chat-container">
     <ul id="messages"></ul>
   </div>
 
-  <div class="formular-container">
+  <div id="chat-input-container" style="display: none;">
     <form id="chat-form">
       <input id="message-input" autocomplete="off" required maxlength="100" />
       <button type="submit">Poslat</button>
     </form>
   </div>
 
-  <a href="http://192.168.11.201/registrace">
-    <button class="login-button">Registrace</button>
-  </a>
-
-  <div class="center-container">
-    <a href="http://192.168.11.201/login">
-      <button class="login-button">Přihlásit se</button>
-    </a>
-  </div>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('message-input');
-    const messages = document.getElementById('messages');
- 
- 
-    form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const message = input.value.trim(); // Trim leading/trailing whitespace
-  const username = '<%= username %>';
+  const socket = io();
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('message-input');
+  const messages = document.getElementById('messages');
+  let canSendMessage = true;
 
-  if (message.length > 0) {
-    socket.emit('chat message', { message, username });
-    input.value = '';
-  } else {
-    alert('Please type at least one word.');
-  }
-});
-  
-    socket.on('chat message', (data) => {
-      const { message, username } = data;
-      const li = document.createElement('li');
-      li.textContent = `${username}: ${message}`;
-  
-      // Insert new messages at the top of the list
-      messages.insertBefore(li, messages.firstChild);
-    });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-    let lastMessageSentTime = 0;
-const cooldownDuration = 5000; // 5 seconds in milliseconds
+    if (!canSendMessage) {
+      alert('Počkej si 1s aby jsi mohl poslat zprávu');
+      return;
+    }
 
-form.addEventListener('submit', (e) => {
-  e.preventDefault(); // Prevent default form submission behavior
-
-  const currentTime = new Date().getTime();
-
-  if (currentTime - lastMessageSentTime >= cooldownDuration) {
-    const message = input.value.trim(); // Trim leading/trailing whitespace
+    const message = input.value.trim();
     const username = '<%= username %>';
 
     if (message.length > 0) {
       socket.emit('chat message', { message, username });
       input.value = '';
-      lastMessageSentTime = currentTime;
-    } 
-  } else if (input.value.trim().length > 0) {
-    const timeLeft = (cooldownDuration - (currentTime - lastMessageSentTime)) / 1000;
-    alert(`Please wait ${timeLeft.toFixed(1)} seconds before sending another message.`);
+      canSendMessage = false;
+
+      // Allow sending messages after 3 seconds
+      setTimeout(() => {
+        canSendMessage = true;
+      }, 3000); // 3 seconds cooldown
+    } else {
+      alert('Please type at least one word.');
+    }
+  });
+
+  socket.on('chat message', (data) => {
+    const { message, username } = data;
+    const li = document.createElement('li');
+    const isURL = isUrl(message);
+
+    if (isURL) {
+      const img = document.createElement('img');
+      img.src = message;
+      li.appendChild(img);
+    } else {
+      li.textContent = `${username}: ${message}`;
+    }
+
+    messages.insertBefore(li, messages.firstChild);
+  });
+
+  // Function to check if a string is a URL
+  function isUrl(s) {
+    const pattern = /^(ftp|http|https):\/\/[^ "]+$/;
+    return pattern.test(s);
   }
-});
+
+
 
 
 
@@ -155,10 +188,21 @@ form.addEventListener('submit', (e) => {
 
 
     
+const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
+  const chatInputContainer = document.getElementById('chat-input-container');
+
+  // Show/hide chat input based on user login status
+  if (isLoggedIn) {
+    chatInputContainer.style.display = 'block';
+  } else {
+    chatInputContainer.style.display = 'none';
+  }
+
+
+
+    
   </script>
   
-
- 
 
 
 </body>

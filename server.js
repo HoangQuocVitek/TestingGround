@@ -6,6 +6,9 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const app = express();
 
+
+
+
 const server = http.createServer(app);
 const io = require('socket.io')(server);
 
@@ -62,7 +65,10 @@ app.get('/login', (req, res) => {
 
 app.get('/', (req, res) => {
   const username = req.session.username || '';
-  res.render('index', { username }); // Assuming your EJS file is named index.ejs
+
+  const isLoggedIn = username !== '';
+
+  res.render('index', { username, isLoggedIn });
 });
 
 
