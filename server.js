@@ -39,12 +39,17 @@ con.connect(function(err) {
 app.post('/vitek.hoang', function (request, response, next) {
   const { username, email, password, confirmPassword } = request.body;
 
+  // Get the user's IP address
+  const userIP = request.connection.remoteAddress;
+
   if (password !== confirmPassword) {
     return response.status(400).send('Passwords do not match');
   }
 
-  const sql = `INSERT INTO userdatabase (username, email, password) VALUES (?, ?, ?)`;
-  con.query(sql, [username, email, password], (error, results, fields) => {
+  const sql = `INSERT INTO userdatabase (username, email, password, ip_address) VALUES (?, ?, ?, ?)`;
+  
+  // Insert user details along with IP address into the database
+  con.query(sql, [username, email, password, userIP], (error, results, fields) => {
     if (error) {
       console.error(error);
       return response.status(500).send('Error inserting into the database');

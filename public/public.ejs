@@ -156,7 +156,21 @@ const messages = document.getElementById('messages');
       alert('Please type at least one word.');
     }
   });
-  socket.on('chat message', (data) => {
+
+  function isImageURL(url) {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp']; // Add more if needed
+  const ext = url.split('.').pop().toLowerCase();
+  return imageExtensions.includes(ext);
+}
+
+
+function isImageURL(url) {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp']; // Add more if needed
+  const ext = url.split('.').pop().toLowerCase();
+  return imageExtensions.includes(ext);
+}
+// Modify the existing socket.on('chat message') event
+socket.on('chat message', (data) => {
   const { message, username } = data;
   const currentDate = new Date(); // Get the current date and time
 
@@ -167,12 +181,26 @@ const messages = document.getElementById('messages');
 
   const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`; // Construct the desired format
 
-  const chatMessage = `
+  let chatMessage = `
     <div>
       <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
-    </div>
-    <div>${message}</div>
-  `;
+    </div>`;
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = message.match(urlRegex);
+
+  if (urls) {
+    urls.forEach(url => {
+      const imageRegex = /\.(jpeg|jpg|gif|png|bmp)(\?.*)?$/i;
+      if (url.match(imageRegex)) {
+        chatMessage += `<div><img src="${url}" style="max-width: 100%;" /></div>`;
+      } else {
+        chatMessage += `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></div>`;
+      }
+    });
+  } else {
+    chatMessage += `<div>${message}</div>`;
+  }
 
   const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
   messagesArray.push(chatMessage);
@@ -187,8 +215,6 @@ const messages = document.getElementById('messages');
 
 
 
-
-
 document.addEventListener('DOMContentLoaded', () => {
   const messagesContainer = document.getElementById('messages');
 
@@ -198,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
       messages.forEach(msg => {
         const chatMessage = formatChatMessage(msg.username, msg.message, msg.timestamp);
         const newMessage = createMessageElement(chatMessage);
-        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert the new message at the beginning of the messages container
+        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert t+message at the beginning of the messages container
       });
     })
     .catch(error => {
