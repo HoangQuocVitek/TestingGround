@@ -1,209 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>chit chat
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  </title>
-  <style>
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #363636;
-}
+    <style>
+        body {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #363636;
+        }
 
-#chat-container {
-  display: flex;
-  flex-direction: column-reverse; /* Reverse the order of messages */
-  height: 70%;
-  max-height: 70%; /* Set maximum height */
-  width: 80%;
-  border: 1px solid #ccc;
-  overflow-y: auto; /* Enable vertical scrollbar only */
-  overflow-x: hidden; /* Hide horizontal scrollbar */
-  margin-bottom: 20px;
-  padding: 10px;
-  color: white;
-}
+        /* Styles for .right-container */
+        .right-container {
+            display: flex;
+            justify-content: flex-end;
+            height: 50vh;
+            padding-right: 20px; /* Adding some padding for space */
+        }
 
+        .right-container a {
+            margin-left: 10px;
+            text-decoration: none;
+        }
 
+        /* Styles for login buttons */
+        .login-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-#messages {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column-reverse; /* Reverses the order of items */
-  max-height: 100%; /* Adjust this to fit your layout */
-  overflow-y: auto; /* Enable vertical scrollbar */
-}
-
-#chat-form {
-  display: flex;
-  width: 100%;
-  align-items: flex-end; /* Aligns the input to the bottom */
-}
-
-#message-input {
-  flex: 1;
-  padding: 5px;
-  margin-right: 5px;
-}
-
-button {
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.center-container {
-  display: flex;
-  justify-content: center;
-  float:right;
-}
-
-.button-container {
-  display: inline-flex; /* Display buttons inline */
-}
-
-.right-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 80%;
-  margin-bottom: 20px; /* To add space between the buttons and the chat container */
-}
-
-.login-button {
-  margin: 5px;
-  /* Add other styles as needed */
-}
-
-
-.formular-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 80%;
-}
-
-.formular-container button {
-  margin-left: 10px; /* Adds space between input and button */
-}
-
-  </style>
+        /* Separate CSS block for Public button */
+        .public-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
-
-
-
-
-
 <body>
-
-
-
-  <div class="right-container">
-    <a href="http://192.168.11.201/registrace">
-      <button class="login-button">Registrace</button>
-    </a>
-    <a href="http://192.168.11.201/login">
-      <button class="login-button">Přihlásit se</button>
-    </a>
-  </div>
-
-
-
-  <div id="chat-container">
-    <ul id="messages"></ul>
-  </div>
-
-  <div id="chat-input-container" style="display: none;">
-    <form id="chat-form">
-      <input id="message-input" autocomplete="off" required maxlength="100" />
-      <button type="submit">Poslat</button>
-    </form>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-  const socket = io();
-  const form = document.getElementById('chat-form');
-  const input = document.getElementById('message-input');
-  const messages = document.getElementById('messages');
-  let canSendMessage = true;
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    if (!canSendMessage) {
-      alert('Počkej si 1s aby jsi mohl poslat zprávu');
-      return;
-    }
-
-    const message = input.value.trim();
-    const username = '<%= username %>';
-
-    if (message.length > 0) {
-      socket.emit('chat message', { message, username });
-      input.value = '';
-      canSendMessage = false;
-
-      // Allow sending messages after 3 seconds
-      setTimeout(() => {
-        canSendMessage = true;
-      }, 3000); // 3 seconds cooldown
-    } else {
-      alert('Please type at least one word.');
-    }
-  });
-
-  socket.on('chat message', (data) => {
-    const { message, username } = data;
-    const li = document.createElement('li');
-    const isURL = isUrl(message);
-
-    if (isURL) {
-      const img = document.createElement('img');
-      img.src = message;
-      li.appendChild(img);
-    } else {
-      li.textContent = `${username}: ${message}`;
-    }
-
-    messages.insertBefore(li, messages.firstChild);
-  });
-
-  // Function to check if a string is a URL
-  function isUrl(s) {
-    const pattern = /^(ftp|http|https):\/\/[^ "]+$/;
-    return pattern.test(s);
-  }
-
-
-
-
-
-
-
-
+    <div class="right-container">
+        <a id="registrationLink" href="http://192.168.11.201/registrace">
+            <button class="login-button">Registrace</button>
+        </a>
+        <a id="loginLink" href="http://192.168.11.201/login">
+            <button class="login-button">Přihlásit se</button>
+        </a>
+    </div>
     
-const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
-  const chatInputContainer = document.getElementById('chat-input-container');
+    <div id="publicLink" style="display: flex; justify-content: center;">
+        <a href="http://192.168.11.201/public">
+            <button id="publicButton" class="public-button">Public</button>
+        </a>
+    </div>
+    <script>
+        const links = document.querySelectorAll('.right-container a');
+        const publicLink = document.getElementById('publicLink');
 
-  // Show/hide chat input based on user login status
-  if (isLoggedIn) {
-    chatInputContainer.style.display = 'block';
-  } else {
-    chatInputContainer.style.display = 'none';
-  }
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href.includes('http://192.168.11.201') && href !== 'http://192.168.11.201') {
+                if (href.includes('/login')) {
+                    link.setAttribute('href', 'http://localhost/login'); // Replace login URL
+                } else if (href.includes('/registrace')) {
+                    link.setAttribute('href', 'http://localhost/registrace'); // Replace registration URL
+                }
+            }
+        });
 
+        // Function to redirect the Public button
+        const redirectToLocalhostPublic = () => {
+            const originalPublicHref = publicLink.querySelector('a').getAttribute('href');
 
+            // Check if the current hostname is the given IP address
+            if (window.location.hostname === '192.168.11.201') {
+                window.location.href = originalPublicHref; // Redirect to the original IP address
+            } else {
+                // Redirect to localhost
+                const localhostPublicURL = 'http://localhost/public';
+                window.location.href = localhostPublicURL;
+            }
+        };
 
-    
-  </script>
-  
-
-
+        publicLink.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default behavior of the link
+            redirectToLocalhostPublic(); // Call function to determine the redirection for Public button
+        });
+    </script>
 </body>
 </html>

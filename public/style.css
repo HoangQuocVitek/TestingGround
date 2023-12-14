@@ -6,12 +6,12 @@
     height: 100vh;
 }
 body {
-    background-color: rgb(216, 160, 97);
+    background-color: #363636;
   }
 label {
     display: block;
     margin-bottom: 10px;
-    color: #000000;
+    color: #ffffff;
 }
 
 input[type="text"], input[type="password"] {

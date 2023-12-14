@@ -9,9 +9,9 @@
 </head>
 
 <body>
-    <!-- Your registration button -->
-    <a href="http://192.168.11.201/registrace"><button class="login-button">Registrace</button></a>
-    
+    <div class="right-container">
+        <a href="http://192.168.11.201/registrace"><button class="login-button">Registrace</button></a>
+    </div>
     <!-- Login form -->
     <div class="center-container">
         <form action="/login" method="POST">
@@ -30,8 +30,18 @@
         </form>
     </div>
 
-    <script src="index.js">
+    <script src="index.js"></script>
 
-    </script>
+<script>    // Get all anchor tags wrapping buttons with the class 'login-button'
+    const links = document.querySelectorAll('.right-container a');
+  
+  // Loop through each link to modify the href attribute
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href.includes('http://192.168.11.201') && href !== 'http://192.168.11.201') {
+      link.setAttribute('href', 'http://localhost' + href.slice(21)); // Replace IP with localhost
+    }
+  });
+  </script>
 </body>
 </html>

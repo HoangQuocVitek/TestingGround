@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>chit chat
+
+  </title>
+  <style>
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #363636;
+}
+
+#chat-container {
+  display: flex;
+  flex-direction: column-reverse; /* Reverse the order of messages */
+  height: 70%;
+  max-height: 70%; /* Set maximum height */
+  width: 80%;
+  border: 1px solid #ccc;
+  overflow-y: auto; /* Enable vertical scrollbar only */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  margin-bottom: 20px;
+  padding: 10px;
+  color: white;
+}
+
+
+
+#messages {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column-reverse; /* Reverses the order of items */
+  max-height: 100%; /* Adjust this to fit your layout */
+  overflow-y: auto; /* Enable vertical scrollbar */
+}
+
+#chat-form {
+  display: flex;
+  width: 100%;
+  align-items: flex-end; /* Aligns the input to the bottom */
+}
+
+#message-input {
+  flex: 1;
+  padding: 5px;
+  margin-right: 5px;
+}
+
+button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.center-container {
+  display: flex;
+  justify-content: center;
+  float:right;
+}
+
+.button-container {
+  display: inline-flex; /* Display buttons inline */
+}
+
+.right-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 80%;
+  margin-bottom: 20px; /* To add space between the buttons and the chat container */
+}
+
+.login-button {
+  margin: 5px;
+  /* Add other styles as needed */
+}
+
+
+.formular-container {
+  display: flex;
+  justify-content: flex-end;
+  width: 80%;
+}
+
+.formular-container button {
+  margin-left: 10px; /* Adds space between input and button */
+}
+
+  </style>
+</head>
+
+
+
+
+
+
+<body>
+
+
+  <div class="right-container">
+    <a id="registrationLink" href="http://192.168.11.201/registrace">
+      <button class="login-button">Registrace</button>
+    </a>
+    <a id="loginLink" href="http://192.168.11.201/login">
+      <button class="login-button">Přihlásit se</button>
+    </a>
+  </div>
+
+
+
+  <div id="chat-container">
+    <ul id="messages"></ul>
+  </div>
+
+  <div id="chat-input-container" style="display: none;">
+    <form id="chat-form">
+      <input id="message-input" autocomplete="off" required maxlength="100" />
+      <button type="submit">Poslat</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+  const socket = io();
+  const form = document.getElementById('chat-form');
+const input = document.getElementById('message-input');
+const messages = document.getElementById('messages');
+  let canSendMessage = true;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if (!canSendMessage) {
+      alert('Počkej si 1s aby jsi mohl poslat zprávu');
+      return;
+    }
+
+    const message = input.value.trim();
+    const username = '<%= username %>';
+
+    if (message.length > 0) {
+      socket.emit('chat message', { message, username });
+      input.value = '';
+      canSendMessage = false;
+
+      // Allow sending messages after 3 seconds
+      setTimeout(() => {
+        canSendMessage = true;
+      }, 3000); // 3 seconds cooldown
+    } else {
+      alert('Please type at least one word.');
+    }
+  });
+  socket.on('chat message', (data) => {
+  const { message, username } = data;
+  const currentDate = new Date(); // Get the current date and time
+
+  const day = currentDate.getDate(); // Get the day of the month
+  const month = currentDate.getMonth() + 1; // Get the numeric representation of the month
+  const hour = currentDate.getHours(); // Get the hour
+  const minutes = currentDate.getMinutes(); // Get the minutes
+
+  const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`; // Construct the desired format
+
+  const chatMessage = `
+    <div>
+      <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
+    </div>
+    <div>${message}</div>
+  `;
+
+  const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
+  messagesArray.push(chatMessage);
+  localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
+
+  const li = document.createElement('li');
+  li.innerHTML = chatMessage;
+
+  messages.insertBefore(li, messages.firstChild); // Insert the new message at the beginning of the messages container
+});
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const messagesContainer = document.getElementById('messages');
+
+  fetch('/get-messages')
+    .then(response => response.json())
+    .then(messages => {
+      messages.forEach(msg => {
+        const chatMessage = formatChatMessage(msg.username, msg.message, msg.timestamp);
+        const newMessage = createMessageElement(chatMessage);
+        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert the new message at the beginning of the messages container
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching messages:', error);
+    });
+
+    function formatChatMessage(username, message, timestamp) {
+  const currentDate = new Date(timestamp); // Convert timestamp to Date object
+  const day = currentDate.getDate(); // Get the day of the month
+  const month = currentDate.getMonth() + 1; // Get the numeric representation of the month
+  const hour = currentDate.getHours(); // Get the hour
+  const minutes = currentDate.getMinutes(); // Get the minutes
+
+  const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`; // Construct the desired format
+
+  return `
+    <div>
+      <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
+    </div>
+    <div>${message}</div>
+  `;
+}
+  function createMessageElement(chatMessage) {
+    const li = document.createElement('li');
+    li.innerHTML = chatMessage;
+    return li;
+  }
+});
+
+
+    
+const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
+  const chatInputContainer = document.getElementById('chat-input-container');
+
+  // Show/hide chat input based on user login status
+  if (isLoggedIn) {
+    chatInputContainer.style.display = 'block';
+  } else {
+    chatInputContainer.style.display = 'none';
+  }
+
+
+
+
+
+
+
+  const buttons = document.querySelectorAll('.login-button');
+
+// Loop through each button to modify the href attribute
+buttons.forEach(button => {
+  const href = button.parentElement.getAttribute('href');
+  if (href !== 'http://192.168.11.201') {
+    button.parentElement.setAttribute('href', 'http://localhost' + href.slice(21)); // Replace IP with localhost
+  }
+});
+    
+  </script>
+  
+
+
+</body>
+</html>

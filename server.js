@@ -62,6 +62,15 @@ app.get('/login', (req, res) => {
   const username = req.session.username || '';
   res.render('login', { username });
 });
+app.get('/public', (req, res) => {
+  const username = req.session.username || '';
+
+  const isLoggedIn = username !== '';
+
+  res.render('public', { username, isLoggedIn });
+});
+
+
 
 app.get('/', (req, res) => {
   const username = req.session.username || '';
@@ -105,16 +114,54 @@ app.post('/login', (req, res) => {
   });
 });
 
-
 io.on('connection', (socket) => {
   console.log('New user connected');
 
   socket.on('chat message', (data) => {
-    console.log('Received message: ' + data.message);
-    io.emit('chat message', { message: data.message, username: data.username });
-  });
+    const { message, username, timestamp } = data;
+  
+    const formattedDate = new Date(timestamp).toLocaleString(); // Convert timestamp to user's local time
+  
+    const chatMessage = `
+      <div>
+        <span style="font-weight: bold;">${username}</span> ${formattedDate}
+      </div>
+      <div>${message}</div>
+    `;
+    const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/-/g, '/').replace(' ', ' ');
+
+    // Your database query to insert the message into 'chat_messages' table
+    const sql = `INSERT INTO chat_messages (username, message, timestamp) VALUES (?, ?, ?)`;
+    con.query(sql, [username, message, currentDate], (error, results, fields) => {
+        if (error) {
+            console.error(error);
+            // Handle the error appropriately
+            return;
+        }
+        console.log('Message inserted into the database');
+        // Emit the message to all clients
+        io.emit('chat message', { username, message, timestamp: currentDate });
+    });
+});
+
+
+
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });
 });
+
+app.get('/get-messages', (req, res) => {
+  // Fetch messages from 'chat_messages' table
+  const sql = `SELECT username, message, timestamp FROM chat_messages ORDER BY timestamp`;
+  con.query(sql, (error, results, fields) => {
+    if (error) {
+      console.error('Error fetching messages:', error);
+      return res.status(500).json({ error: 'Error fetching messages from the database' });
+    }
+    res.json(results); // Send fetched messages as JSON response
+  });
+});
+
+
