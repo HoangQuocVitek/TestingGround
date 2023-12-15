@@ -47,7 +47,7 @@ app.post('/vitek.hoang', function (request, response, next) {
   }
 
   const sql = `INSERT INTO userdatabase (username, email, password, ip_address) VALUES (?, ?, ?, ?)`;
-  
+
   // Insert user details along with IP address into the database
   con.query(sql, [username, email, password, userIP], (error, results, fields) => {
     if (error) {
@@ -123,34 +123,27 @@ io.on('connection', (socket) => {
   console.log('New user connected');
 
   socket.on('chat message', (data) => {
-    const { message, username, timestamp } = data;
+    const { message, username } = data;
+    
+    // Get the current timestamp
+    const timestamp = new Date();
   
-    const formattedDate = new Date(timestamp).toLocaleString(); // Convert timestamp to user's local time
+    const sql = `
+      INSERT INTO public_messages (id_username, message, timestamp) 
+      SELECT userdatabase.idUserDatabase, ?, ? 
+      FROM userdatabase 
+      WHERE userdatabase.username = ?`;
   
-    const chatMessage = `
-      <div>
-        <span style="font-weight: bold;">${username}</span> ${formattedDate}
-      </div>
-      <div>${message}</div>
-    `;
-    const currentDate = new Date().toISOString().slice(0, 19).replace('T', ' ').replace(/-/g, '/').replace(' ', ' ');
-
-    // Your database query to insert the message into 'chat_messages' table
-    const sql = `INSERT INTO chat_messages (username, message, timestamp) VALUES (?, ?, ?)`;
-    con.query(sql, [username, message, currentDate], (error, results, fields) => {
-        if (error) {
-            console.error(error);
-            // Handle the error appropriately
-            return;
-        }
-        console.log('Message inserted into the database');
-        // Emit the message to all clients
-        io.emit('chat message', { username, message, timestamp: currentDate });
+    con.query(sql, [message, timestamp, username], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      console.log('Message inserted into the database');
+      io.emit('chat message', { username, message, timestamp }); // Send the message with timestamp to clients
     });
-});
-
-
-
+  });
+  
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
@@ -158,14 +151,37 @@ io.on('connection', (socket) => {
 });
 
 app.get('/get-messages', (req, res) => {
-  // Fetch messages from 'chat_messages' table
-  const sql = `SELECT username, message, timestamp FROM chat_messages ORDER BY timestamp`;
+  const loggedInUsername = req.session.username;
+
+  const sql = `
+    SELECT u.username AS username, pm.message AS message, pm.timestamp AS timestamp 
+    FROM public_messages pm
+    JOIN userdatabase u ON pm.id_username = u.idUserDatabase
+    ORDER BY pm.timestamp`;
+
   con.query(sql, (error, results, fields) => {
     if (error) {
       console.error('Error fetching messages:', error);
       return res.status(500).json({ error: 'Error fetching messages from the database' });
     }
-    res.json(results); // Send fetched messages as JSON response
+
+    const formattedResults = results.map(msg => {
+      // Format the timestamp here according to your desired format
+      const rawTimestamp = msg.timestamp; // Assuming timestamp is in a compatible format
+      
+      // Formatting the timestamp (customize this part based on your timestamp structure)
+      const formattedDate = new Date(rawTimestamp);
+      const day = formattedDate.getDate();
+      const month = formattedDate.getMonth() + 1;
+      const hour = formattedDate.getHours();
+      const minutes = formattedDate.getMinutes();
+      const formattedTimestamp = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+      // Return both the original timestamp and the formatted one
+      return { ...msg, formattedTimestamp };
+    });
+
+    res.json(formattedResults); // Send formatted messages as JSON response
   });
 });
 

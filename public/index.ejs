@@ -72,35 +72,7 @@
         const links = document.querySelectorAll('.right-container a');
         const publicLink = document.getElementById('publicLink');
 
-        links.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href.includes('http://192.168.11.201') && href !== 'http://192.168.11.201') {
-                if (href.includes('/login')) {
-                    link.setAttribute('href', 'http://localhost/login'); // Replace login URL
-                } else if (href.includes('/registrace')) {
-                    link.setAttribute('href', 'http://localhost/registrace'); // Replace registration URL
-                }
-            }
-        });
-
-        // Function to redirect the Public button
-        const redirectToLocalhostPublic = () => {
-            const originalPublicHref = publicLink.querySelector('a').getAttribute('href');
-
-            // Check if the current hostname is the given IP address
-            if (window.location.hostname === '192.168.11.201') {
-                window.location.href = originalPublicHref; // Redirect to the original IP address
-            } else {
-                // Redirect to localhost
-                const localhostPublicURL = 'http://localhost/public';
-                window.location.href = localhostPublicURL;
-            }
-        };
-
-        publicLink.addEventListener('click', (event) => {
-            event.preventDefault(); // Prevent default behavior of the link
-            redirectToLocalhostPublic(); // Call function to determine the redirection for Public button
-        });
+        
     </script>
 </body>
 </html>
