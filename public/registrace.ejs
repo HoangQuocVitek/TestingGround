@@ -44,7 +44,7 @@
     
 
 
-  <a    href="http://192.168.11.201/login"> <button class="login-button">Přihlásit se</button> </a>
+  <a    href="http://localhost/login"> <button class="login-button">Přihlásit se</button> </a>
     <div class="center-container">
        
        
@@ -80,17 +80,5 @@
             </div>
     </form>
 
-
-<script> const buttons = document.querySelectorAll('.login-button');
-
-    // Loop through each button to modify the href attribute
-    buttons.forEach(button => {
-      const href = button.parentElement.getAttribute('href');
-      if (href !== 'http://192.168.11.201') {
-        button.parentElement.setAttribute('href', 'http://localhost' + href.slice(21)); // Replace IP with localhost
-      }
-    });</script>
-
-</div>
 </body>
 </html>

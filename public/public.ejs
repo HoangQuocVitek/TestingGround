@@ -96,12 +96,14 @@ button {
 
 <body>
 
-
+  <a  href="http://localhost/">
+    <button class="login-button">MainMenu</button>
+  </a>
   <div class="right-container">
-    <a id="registrationLink" href="http://192.168.11.201/registrace">
+    <a id="registrationLink" href="http://localhost/registrace">
       <button class="login-button">Registrace</button>
     </a>
-    <a id="loginLink" href="http://192.168.11.201/login">
+    <a id="loginLink" href="http://localhost/login">
       <button class="login-button">Přihlásit se</button>
     </a>
   </div>
@@ -152,29 +154,22 @@ const messages = document.getElementById('messages');
     }
   });
 
-  function isImageURL(url) {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp']; // Add more if needed
-  const ext = url.split('.').pop().toLowerCase();
-  return imageExtensions.includes(ext);
-}
 
 
-function isImageURL(url) {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp']; // Add more if needed
-  const ext = url.split('.').pop().toLowerCase();
-  return imageExtensions.includes(ext);
-}
+
+
+  
 // Modify the existing socket.on('chat message') event
-socket.on('chat message', (data) => {
+socket.on('chat message', async (data) => {
   const { message, username } = data;
-  const currentDate = new Date(); // Get the current date and time
+  const currentDate = new Date();
 
-  const day = currentDate.getDate(); // Get the day of the month
-  const month = currentDate.getMonth() + 1; // Get the numeric representation of the month
-  const hour = currentDate.getHours(); // Get the hour
-  const minutes = currentDate.getMinutes(); // Get the minutes
+  const day = currentDate.getDate();
+  const month = currentDate.getMonth() + 1;
+  const hour = currentDate.getHours();
+  const minutes = currentDate.getMinutes();
 
-  const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`; // Construct the desired format
+  const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
   let chatMessage = `
     <div>
@@ -185,18 +180,14 @@ socket.on('chat message', (data) => {
   const urls = message.match(urlRegex);
 
   if (urls) {
-    urls.forEach(url => {
-      const imageRegex = /\.(jpeg|jpg|gif|png|bmp)(\?.*)?$/i;
-      if (url.match(imageRegex)) {
-        chatMessage += `<div><img src="${url}" style="max-width: 100%;" /></div>`;
-      } else {
-        chatMessage += `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></div>`;
-      }
-    });
+    for (const url of urls) {
+      chatMessage += `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></div>`;
+    }
   } else {
     chatMessage += `<div>${message}</div>`;
   }
 
+  // This code below remains unchanged - it adds the constructed message to the chat window
   const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
   messagesArray.push(chatMessage);
   localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
@@ -206,6 +197,11 @@ socket.on('chat message', (data) => {
 
   messages.insertBefore(li, messages.firstChild); // Insert the new message at the beginning of the messages container
 });
+
+
+socket.on('connect', () => {
+    socket.emit('page refresh');
+  });
 
 
 
@@ -219,33 +215,45 @@ document.addEventListener('DOMContentLoaded', () => {
       messages.forEach(msg => {
         const chatMessage = formatChatMessage(msg.username, msg.message, msg.timestamp);
         const newMessage = createMessageElement(chatMessage);
-        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert t+message at the beginning of the messages container
+        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert message at the beginning of the messages container
       });
     })
     .catch(error => {
       console.error('Error fetching messages:', error);
     });
 
-    function formatChatMessage(username, message, timestamp) {
-  const currentDate = new Date(timestamp); // Convert timestamp to Date object
-  const day = currentDate.getDate(); // Get the day of the month
-  const month = currentDate.getMonth() + 1; // Get the numeric representation of the month
-  const hour = currentDate.getHours(); // Get the hour
-  const minutes = currentDate.getMinutes(); // Get the minutes
+  function formatChatMessage(username, message, timestamp) {
+    const currentDate = new Date(timestamp);
+    const day = currentDate.getDate();
+    const month = currentDate.getMonth() + 1;
+    const hour = currentDate.getHours();
+    const minutes = currentDate.getMinutes();
+    const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return `
+      <div>
+        <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
+      </div>
+      <div>${processMessage(message)}</div>
+    `;
+  }
 
-  const formattedDate = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`; // Construct the desired format
-
-  return `
-    <div>
-      <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
-    </div>
-    <div>${message}</div>
-  `;
-}
   function createMessageElement(chatMessage) {
     const li = document.createElement('li');
     li.innerHTML = chatMessage;
     return li;
+  }
+
+  function processMessage(message) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = message.match(urlRegex);
+    if (urls) {
+      let processedMessage = '';
+      for (const url of urls) {
+        processedMessage += `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></div>`;
+      }
+      return processedMessage;
+    }
+    return message; 
   }
 });
 
@@ -264,19 +272,6 @@ const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
 
 
 
-
-
-
-  const buttons = document.querySelectorAll('.login-button');
-
-// Loop through each button to modify the href attribute
-buttons.forEach(button => {
-  const href = button.parentElement.getAttribute('href');
-  if (href !== 'http://192.168.11.201') {
-    button.parentElement.setAttribute('href', 'http://localhost' + href.slice(21)); // Replace IP with localhost
-  }
-});
-    
   </script>
   
 
