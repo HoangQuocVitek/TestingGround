@@ -108,7 +108,11 @@ button {
     </a>
   </div>
 
-
+  <div class="formular-container">
+    <form id="logoutForm" action="/logout" method="post">
+      <button type="submit" class="login-button">Odhlásit se</button>
+    </form>
+  </div>
 
   <div id="chat-container">
     <ul id="messages"></ul>
@@ -278,3 +282,4 @@ const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
 
 </body>
 </html>
+

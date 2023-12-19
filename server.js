@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const server = http.createServer(app);
 const io = require('socket.io')(server);
-
+const crypto = require('crypto');
 // Middleware setup
 app.use(cookieParser());
 app.use(express.static(__dirname + '/public'));
@@ -90,6 +90,20 @@ app.get('/', (req, res) => {
 });
 
 // Login endpoint
+
+const randomBytes = crypto.randomBytes;
+const createHash = crypto.createHash;
+
+// Login endpoint
+// Function to generate a secure random token
+const generateRandomToken = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
+
+// Login endpoint
+// Login endpoint
+// Login endpoint
+// Login endpoint
 app.post('/login', (req, res) => {
   const { username, password, remember } = req.body;
 
@@ -101,12 +115,36 @@ app.post('/login', (req, res) => {
     }
 
     if (results.length > 0) {
+      const userId = results[0].idUserDatabase; // Fetch the user ID
+
+
+      
       req.session.authenticated = true;
       req.session.username = username;
       console.log(`User ${username} logged in`);
-      
+
       if (remember) {
-        res.cookie('rememberedUser', username, { maxAge: 604800000, httpOnly: true });
+        const series = generateRandomToken();
+        const token = generateRandomToken();
+
+        // Hash the token before storing it in the database
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        // Store the series, hashed token, and user ID in the database
+        const rememberMeQuery = `
+          INSERT INTO remember_me (id_user_database, series, token)
+          SELECT idUserDatabase, ?, ? FROM userdatabase WHERE username = ?`;
+        con.query(rememberMeQuery, [series, hashedToken, username], (error, results, fields) => {
+          if (error) {
+            console.error(error);
+            return res.status(500).send('Error storing remember me token');
+          }
+          console.log('Remember me token stored for user:', username);
+        });
+
+        // Set the remember me cookie with the series and token (hashed)
+        res.cookie('rememberedSeries', series, { maxAge: 604800000, httpOnly: true });
+        res.cookie('rememberedToken', token, { maxAge: 604800000, httpOnly: true });
       }
 
       io.emit('user connected', username);
@@ -117,6 +155,47 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+
+
+
+// Middleware to check remember me cookie and authenticate
+app.use((req, res, next) => {
+  const rememberedSeries = req.cookies.rememberedSeries;
+  const rememberedToken = req.cookies.rememberedToken;
+
+  if (rememberedSeries && rememberedToken && !req.session.username) {
+    // Check if the series and token match the stored values in the database
+    const checkQuery = `SELECT * FROM remember_me WHERE series = ?`;
+    con.query(checkQuery, [rememberedSeries], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).send('Error checking remember me token');
+      }
+
+      if (results.length > 0) {
+        const storedToken = results[0].token;
+        const hashedToken = crypto.createHash('sha256').update(rememberedToken).digest('hex');
+
+        if (storedToken === hashedToken) {
+          // If tokens match, authenticate the user
+          req.session.authenticated = true;
+          req.session.username = results[0].username;
+          console.log(`User ${results[0].username} authenticated from remember me`);
+        } else {
+          // If tokens don't match, clear the remember me cookies
+          res.clearCookie('rememberedSeries');
+          res.clearCookie('rememberedToken');
+          console.log('Remember me tokens do not match. Cookies cleared.');
+        }
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
 
 // Socket.io handling
 const connectedUsers = {};
@@ -255,5 +334,18 @@ app.post('/create-chat', (req, res) => {
     }
     console.log('Chat table created');
     res.sendStatus(200); // Send success status if table creation is successful
+  });
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error logging out');
+    }
+    res.clearCookie('rememberedSeries');
+    res.clearCookie('rememberedToken');
+    res.clearCookie('loggedInUser');
+    res.redirect('/'); 
   });
 });
