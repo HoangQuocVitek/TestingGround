@@ -9,25 +9,44 @@ const app = express();
 const server = http.createServer(app);
 const io = require('socket.io')(server);
 const crypto = require('crypto');
-// Middleware setup
+const MySQLStore = require('express-mysql-session')(session);
+
+// MySQL connection configuration
+const sessionStoreOptions = {
+  host: '192.168.1.161',
+  port: '3001',
+  user: 'vitek.hoang',
+  password: 'BookOfDarkness',
+  database: 'vitek.hoang',
+};
+
+
+
+
 app.use(cookieParser());
 app.use(express.static(__dirname + '/public'));
+
+const sessionStore = new MySQLStore(sessionStoreOptions);
 app.use(session({
   secret: 'tajnasekret',
   resave: false,
   saveUninitialized: true,
+  store: sessionStore, // Use the created session store
 }));
+
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'public'));
 
 // MySQL connection
 const con = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
+  host: '192.168.1.161',
+  user: 'vitek.hoang',
   password: 'BookOfDarkness',
   database: 'vitek.hoang',
-  port: 3306
+  port: 3001
 });
 con.connect(function(err) {
   if (err) throw err;
@@ -101,13 +120,10 @@ const generateRandomToken = () => {
 };
 
 // Login endpoint
-// Login endpoint
-// Login endpoint
-// Login endpoint
 app.post('/login', (req, res) => {
   const { username, password, remember } = req.body;
 
-  const sql = `SELECT * FROM userdatabase WHERE username = ? AND password = ?`;
+  const sql = `SELECT * FROM userdatabase WHERE username = ? AND BINARY password = ?`;
   con.query(sql, [username, password], (error, results, fields) => {
     if (error) {
       console.error(error);
@@ -120,8 +136,8 @@ app.post('/login', (req, res) => {
 
       
       req.session.authenticated = true;
-      req.session.username = username;
-      console.log(`User ${username} logged in`);
+req.session.username = results[0].username;
+console.log(`User ${results[0].username} authenticated from remember me`);
 
       if (remember) {
         const series = generateRandomToken();
@@ -132,8 +148,8 @@ app.post('/login', (req, res) => {
 
         // Store the series, hashed token, and user ID in the database
         const rememberMeQuery = `
-          INSERT INTO remember_me (id_user_database, series, token)
-          SELECT idUserDatabase, ?, ? FROM userdatabase WHERE username = ?`;
+        INSERT INTO remember_me_tokens (user_id, series, token)
+        SELECT idUserDatabase, ?, ? FROM userdatabase WHERE username = ?`;
         con.query(rememberMeQuery, [series, hashedToken, username], (error, results, fields) => {
           if (error) {
             console.error(error);
@@ -156,17 +172,13 @@ app.post('/login', (req, res) => {
   });
 });
 
-
-
-
-// Middleware to check remember me cookie and authenticate
+// Middleware to check remember me token against the database
 app.use((req, res, next) => {
   const rememberedSeries = req.cookies.rememberedSeries;
   const rememberedToken = req.cookies.rememberedToken;
 
   if (rememberedSeries && rememberedToken && !req.session.username) {
-    // Check if the series and token match the stored values in the database
-    const checkQuery = `SELECT * FROM remember_me WHERE series = ?`;
+    const checkQuery = `SELECT * FROM remember_me_tokens WHERE series = ?`;
     con.query(checkQuery, [rememberedSeries], (error, results, fields) => {
       if (error) {
         console.error(error);
@@ -180,7 +192,7 @@ app.use((req, res, next) => {
         if (storedToken === hashedToken) {
           // If tokens match, authenticate the user
           req.session.authenticated = true;
-          req.session.username = results[0].username;
+          req.session.username = getUsernameFromUserId(results[0].user_id);
           console.log(`User ${results[0].username} authenticated from remember me`);
         } else {
           // If tokens don't match, clear the remember me cookies
@@ -189,17 +201,56 @@ app.use((req, res, next) => {
           console.log('Remember me tokens do not match. Cookies cleared.');
         }
       }
-      next();
-    });
+      if (results.length > 0) {
+        const userId = results[0].idUserDatabase; // Fetch the user ID
+
+        // Use getUsernameFromUserId function here
+        getUsernameFromUserId(userId)
+          .then((username) => {
+            req.session.authenticated = true;
+            req.session.username = username;
+            console.log(`User ${username} authenticated from remember me`);
+            // Rest of your code logic here
+          })
+          .catch((error) => {
+            console.error(error);
+            res.status(500).send('Error getting username from user ID');
+          });
+      }
+    }); // <--- Closing bracket for con.query block was missing
   } else {
     next();
   }
 });
 
+const getUsernameFromUserId = (userId) => {
+  return new Promise((resolve, reject) => {
+    const sql = `
+      SELECT u.username 
+      FROM userdatabase u
+      WHERE u.idUserDatabase = ?`;
+
+    con.query(sql, [userId], (error, results, fields) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (results.length > 0) {
+          resolve(results[0].username);
+        } else {
+          reject(new Error('User not found'));
+        }
+      }
+    });
+  });
+};
+
+
 
 // Socket.io handling
 const connectedUsers = {};
+
 io.on('connection', (socket) => {
+  
   let refreshing = false; // Flag to track refreshing
   socket.emit('page refresh');
   socket.on('user connected', (userId) => {
@@ -228,18 +279,8 @@ io.on('connection', (socket) => {
   });
 
 
-  socket.on('disconnect', () => {
-    if (!refreshing) {
-      const disconnectedUserId = socket.userId;
 
-      if (disconnectedUserId && connectedUsers[disconnectedUserId]) {
-        delete connectedUsers[disconnectedUserId];
-        console.log('User disconnected:', disconnectedUserId);
-      } else {
-        console.log('A user disconnected');
-      }
-    }
-  });
+
 
   // Event to handle refreshing from the client-side
   socket.on('page refresh', () => {
@@ -251,7 +292,6 @@ io.on('connection', (socket) => {
 
 
 });
-
 
 
 
@@ -349,3 +389,5 @@ app.post('/logout', (req, res) => {
     res.redirect('/'); 
   });
 });
+
+
