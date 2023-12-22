@@ -101,6 +101,7 @@ app.get('/public', (req, res) => {
   res.render('public', { username, isLoggedIn });
 });
 
+
 // Root route
 app.get('/', (req, res) => {
   const username = req.session.username || '';
@@ -251,10 +252,10 @@ const connectedUsers = {};
 
 io.on('connection', (socket) => {
   
-  let refreshing = false; // Flag to track refreshing
-  socket.emit('page refresh');
+ 
   socket.on('user connected', (userId) => {
-    connectedUsers[userId] = true;
+    socket.userId = userId; // Assign the user ID to the socket property
+    connectedUsers[userId] = true; // Mark the user as connected
     console.log('User connected:', userId);
   });
 
@@ -278,20 +279,15 @@ io.on('connection', (socket) => {
     });
   });
 
-
-
-
-
-  // Event to handle refreshing from the client-side
-  socket.on('page refresh', () => {
-    refreshing = true;
-    setTimeout(() => {
-      refreshing = true;
-    }, 1000); // Adjust the delay according to your needs
+  socket.on('disconnect', () => {
+    const username = socket.username; // Retrieve the username from the socket
+    if (connectedUsers[username]) {
+      io.emit('user left', username + ' has left the public');
+      connectedUsers[username] = false; // Mark the user as disconnected
+      console.log(username + ' has left the public');
+    }
   });
-
-
-});
+});y
 
 
 
