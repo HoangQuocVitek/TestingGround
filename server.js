@@ -287,7 +287,7 @@ io.on('connection', (socket) => {
       console.log(username + ' has left the public');
     }
   });
-});y
+});
 
 
 
@@ -385,5 +385,6 @@ app.post('/logout', (req, res) => {
     res.redirect('/'); 
   });
 });
+
 
 

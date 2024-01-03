@@ -121,7 +121,7 @@ button {
 
   <div id="chat-input-container" style="display: none;">
     <form id="chat-form">
-      <input id="message-input" autocomplete="off" required maxlength="100" />
+      <input id="message-input" autocomplete="off" required maxlength="5000000" />
       <button type="submit">Poslat</button>
     </form>
   </div>
@@ -158,9 +158,34 @@ const messages = document.getElementById('messages');
       alert('Please type at least one word.');
     }
   });
+  
+  function isBase64Image(str) {
+  // Regular expression to check if the string is in a base64 format for an image
+  return /^data:image\/(jpeg|jpg|gif|png);base64,/.test(str);
+}
 
+  async function convertBase64ToImage(base64Data) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${base64Data}`; // Assuming the image format is PNG
 
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
 
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const imageURL = canvas.toDataURL('image/png');
+      resolve(imageURL);
+    };
+
+    img.onerror = (error) => {
+      reject(error);
+    };
+  });
+}
 
 
   
@@ -181,27 +206,30 @@ socket.on('chat message', async (data) => {
       <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
     </div>`;
 
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = message.match(urlRegex);
+  if (isBase64Image(message)) {
+    try {
+      const imageUrl = await convertBase64ToImage(message.split(',')[1]).catch(error => {
+        console.error('Error converting base64 to image:', error);
+        // Handle the error (e.g., display a placeholder, log the error, etc.)
+      });
 
-  if (urls) {
-    for (const url of urls) {
-      chatMessage += `<div><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></div>`;
+      chatMessage += `<div><img src="${imageUrl}" /></div><br>`; // Add line break after the image
+    } catch (error) {
+      console.error('Error handling in the conversion process:', error);
+      // Handle the conversion process error
     }
   } else {
+    // Display the message if it's not an image (optional)
     chatMessage += `<div>${message}</div>`;
   }
-
-  // This code below remains unchanged - it adds the constructed message to the chat window
-  const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
-  messagesArray.push(chatMessage);
-  localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
 
   const li = document.createElement('li');
   li.innerHTML = chatMessage;
 
   messages.insertBefore(li, messages.firstChild); // Insert the new message at the beginning of the messages container
 });
+
+
 
 
 
