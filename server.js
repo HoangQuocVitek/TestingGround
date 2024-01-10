@@ -68,7 +68,7 @@ app.post('/vitek.hoang', function (request, response, next) {
       console.error(error);
       return response.status(500).send('Error inserting into the database');
     }
-    console.log('User inserted into the database');
+    console.log('New user has registered');
     response.redirect('/login');
   });
 });
@@ -270,8 +270,8 @@ io.on('connection', (socket) => {
         console.error(error);
         return;
       }
-      console.log(`${username}:${message}`); // Log username and message
-      
+      console.log(`${username}: ${isBase64 ? 'Image' : message}`); // Log username and message
+
       if (isBase64) {
         // If it's an image, emit an <img> tag
         const imgTag = `<img src="${message}" />`;
