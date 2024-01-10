@@ -13,9 +13,9 @@ const MySQLStore = require('express-mysql-session')(session);
 
 // MySQL connection configuration
 const sessionStoreOptions = {
-  host: '192.168.1.161',
-  port: '3001',
-  user: 'vitek.hoang',
+  host: 'localhost',
+  port: '3306',
+  user: 'root',
   password: 'BookOfDarkness',
   database: 'vitek.hoang',
 };
@@ -42,11 +42,11 @@ app.set('views', path.join(__dirname, 'public'));
 
 // MySQL connection
 const con = mysql.createConnection({
-  host: '192.168.1.161',
-  user: 'vitek.hoang',
+  host: 'localhost',
+  user: 'root',
   password: 'BookOfDarkness',
   database: 'vitek.hoang',
-  port: 3001
+  port: 3306
 });
 con.connect(function(err) {
   if (err) throw err;
@@ -245,51 +245,44 @@ const getUsernameFromUserId = (userId) => {
   });
 };
 
-
-
-// Socket.io handling
+function isBase64Image(str) {
+  // Regular expression to check if the string is in a base64 format for an image
+  return /^data:image\/(jpeg|jpg|gif|png);base64,/.test(str);
+}
 const connectedUsers = {};
 
 io.on('connection', (socket) => {
-  
- 
-  socket.on('user connected', (userId) => {
-    socket.userId = userId; // Assign the user ID to the socket property
-    connectedUsers[userId] = true; // Mark the user as connected
-    console.log('User connected:', userId);
-  });
-
   socket.on('chat message', (data) => {
     const { message, username } = data;
     const timestamp = new Date();
-  
+
+    const isBase64 = isBase64Image(message);
+    const isBase64InDB = isBase64 ? 1 : 0;
+
     const sql = `
-      INSERT INTO public_messages (id_username, message, timestamp) 
-      SELECT userdatabase.idUserDatabase, ?, ? 
+      INSERT INTO public_messages (id_username, message, timestamp, isBase64Image) 
+      SELECT userdatabase.idUserDatabase, ?, ?, ?
       FROM userdatabase 
       WHERE userdatabase.username = ?`;
-  
-    con.query(sql, [message, timestamp, username], (error, results, fields) => {
+
+    con.query(sql, [message, timestamp, isBase64InDB, username], (error, results, fields) => {
       if (error) {
         console.error(error);
         return;
       }
-      console.log('Message inserted into the database');
-      io.emit('chat message', { username, message, timestamp });
+      console.log(`${username}:${message}`); // Log username and message
+      
+      if (isBase64) {
+        // If it's an image, emit an <img> tag
+        const imgTag = `<img src="${message}" />`;
+        io.emit('chat message', { username, message: imgTag, timestamp, isBase64 });
+      } else {
+        // If it's not an image, emit the message as text
+        io.emit('chat message', { username, message, timestamp, isBase64 });
+      }
     });
   });
-
-  socket.on('disconnect', () => {
-    const username = socket.username; // Retrieve the username from the socket
-    if (connectedUsers[username]) {
-      io.emit('user left', username + ' has left the public');
-      connectedUsers[username] = false; // Mark the user as disconnected
-      console.log(username + ' has left the public');
-    }
-  });
 });
-
-
 
 
 
@@ -304,7 +297,7 @@ app.get('/get-messages', (req, res) => {
   const loggedInUsername = req.session.username;
 
   const sql = `
-    SELECT u.username AS username, pm.message AS message, pm.timestamp AS timestamp 
+    SELECT u.username AS username, pm.message AS message, pm.timestamp AS timestamp, pm.isBase64Image AS isBase64Image
     FROM public_messages pm
     JOIN userdatabase u ON pm.id_username = u.idUserDatabase
     ORDER BY pm.timestamp`;
@@ -323,7 +316,14 @@ app.get('/get-messages', (req, res) => {
       const hour = formattedDate.getHours();
       const minutes = formattedDate.getMinutes();
       const formattedTimestamp = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      return { ...msg, formattedTimestamp };
+
+      if (msg.isBase64Image === 1) {
+        // If it's a Base64 image, convert it to an <img> tag
+        const imgTag = `<img src="${msg.message}" />`;
+        return { ...msg, message: imgTag, formattedTimestamp, isBase64Image: 1 };
+      } else {
+        return { ...msg, formattedTimestamp };
+      }
     });
 
     res.json(formattedResults);
@@ -385,6 +385,3 @@ app.post('/logout', (req, res) => {
     res.redirect('/'); 
   });
 });
-
-
-

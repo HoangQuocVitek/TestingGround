@@ -153,44 +153,18 @@ const messages = document.getElementById('messages');
       // Allow sending messages after 3 seconds
       setTimeout(() => {
         canSendMessage = true;
-      }, 3000); // 3 seconds cooldown
+      }, 0); // 3 seconds cooldown
     } else {
       alert('Please type at least one word.');
     }
   });
   
-  function isBase64Image(str) {
-  // Regular expression to check if the string is in a base64 format for an image
-  return /^data:image\/(jpeg|jpg|gif|png);base64,/.test(str);
+  function scrollToBottom() {
+  messages.scrollTop = messages.scrollHeight;
 }
-
-  async function convertBase64ToImage(base64Data) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.src = `data:image/png;base64,${base64Data}`; // Assuming the image format is PNG
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-
-      const imageURL = canvas.toDataURL('image/png');
-      resolve(imageURL);
-    };
-
-    img.onerror = (error) => {
-      reject(error);
-    };
-  });
-}
-
 
   
-// Modify the existing socket.on('chat message') event
-socket.on('chat message', async (data) => {
+  socket.on('chat message', async (data) => {
   const { message, username } = data;
   const currentDate = new Date();
 
@@ -204,31 +178,22 @@ socket.on('chat message', async (data) => {
   let chatMessage = `
     <div>
       <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
-    </div>`;
+    </div>
+    <div>${message}</div>`; // Including the message directly without checking for URLs
 
-  if (isBase64Image(message)) {
-    try {
-      const imageUrl = await convertBase64ToImage(message.split(',')[1]).catch(error => {
-        console.error('Error converting base64 to image:', error);
-        // Handle the error (e.g., display a placeholder, log the error, etc.)
-      });
-
-      chatMessage += `<div><img src="${imageUrl}" /></div><br>`; // Add line break after the image
-    } catch (error) {
-      console.error('Error handling in the conversion process:', error);
-      // Handle the conversion process error
-    }
-  } else {
-    // Display the message if it's not an image (optional)
-    chatMessage += `<div>${message}</div>`;
-  }
+  // Remaining code unchanged
+  const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
+  messagesArray.push(chatMessage);
+  localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
 
   const li = document.createElement('li');
   li.innerHTML = chatMessage;
 
-  messages.insertBefore(li, messages.firstChild); // Insert the new message at the beginning of the messages container
-});
+  messages.insertBefore(li, messages.firstChild);
 
+// Scroll to the bottom after adding a new message
+scrollToBottom();
+});
 
 
 
