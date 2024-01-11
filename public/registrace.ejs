@@ -10,41 +10,57 @@
 
 <body>
     <script>
-        function 
-        togglePasswordVisibility(inputId) {
-                  var passwordInput = document.getElementById(inputId);
-                  if (passwordInput.type === "password") {
-                      passwordInput.type = "text";
-                  } else {
-                      passwordInput.type = "password";
-                  }
-              }
-      
-              function validatePassword() {
-  var password = document.getElementById('password').value;
-  var confirmPassword = document.getElementById('confirmPassword').value;
-  var email = document.getElementById('lname').value;
-  var errorDiv = document.getElementById('passwordError');
+        function togglePasswordVisibility(inputId) {
+            var passwordInput = document.getElementById(inputId);
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+            } else {
+                passwordInput.type = "password";
+            }
+        }
 
-  if (password !== confirmPassword) {
-    errorDiv.innerText = 'Passwords do not match';
-    return false; // Prevent form submission
-  }
+        function validatePassword() {
+            var password = document.getElementById('password').value;
+            var confirmPassword = document.getElementById('confirmPassword').value;
+            var email = document.getElementById('email').value;
+            var errorDiv = document.getElementById('passwordError');
 
-  if (!email.includes('@gmail.com')) {
-    errorDiv.innerText = 'Please enter a valid Gmail address';
-    return false; // Prevent form submission
-  }
+            if (password !== confirmPassword) {
+                errorDiv.innerText = 'Passwords do not match';
+                return false; // Prevent form submission
+            }
 
-  // Clear any previous error message
-  errorDiv.innerText = '';
-  return true; // Allow form submission
-}
-      </script>
+            if (!email.includes('@gmail.com')) {
+                errorDiv.innerText = 'Please enter a valid Gmail address';
+                return false; // Prevent form submission
+            }
+
+            // Clear any previous error message
+            errorDiv.innerText = '';
+            return true; // Allow form submission
+        }
+
+        function redirectToRegistration(event) {
+            event.preventDefault();
+            window.location.href = "http://localhost/registrace";
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginButton = document.querySelector('.login-button');
+            loginButton.href = "http://localhost/login";
+            
+            var registrationButton = document.querySelector('.btn');
+            registrationButton.addEventListener('click', redirectToRegistration);
+        });
+    </script>
+
     
 
 
-  <a    href="http://192.168.11.201/login"> <button class="login-button">Přihlásit se</button> </a>
+  
+<a href="http://localhost/login">
+    <button class="login-button">Přihlásit se</button>
+</a>
     <div class="center-container">
        
        

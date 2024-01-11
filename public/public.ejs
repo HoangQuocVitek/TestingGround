@@ -96,18 +96,26 @@ button {
 
 <body>
 
-  <a href="http://192.168.11.201/">
+  <a id="loginLink" href="#" onclick="redirectTo('http://192.168.11.201/', 'http://localhost/')">
     <button class="login-button">MainMenu</button>
-  </a>
+</a>
+<% if (!isLoggedIn) { %>
   <div class="right-container">
     <a id="registrationLink" href="http://192.168.11.201/registrace">
       <button class="login-button">Registrace</button>
     </a>
-    <a id="loginLink" href="http://192.168.11.201/login">
+    <a id="loginLink" href="#" onclick="redirectTo('http://192.168.11.201/login', 'http://localhost/login')">
       <button class="login-button">Přihlásit se</button>
     </a>
   </div>
+<% } %>
+<% if (isLoggedIn) { %>
+  <p style="color: white;">Welcome, <%= username %>!</p>
+<% } %>
 
+<div id="public-users">
+  <p style="color: white;">People in Public Chat: <span id="online-users">0</span></p>
+</div>
 
   <div class="formular-container">
     <form id="logoutForm" action="/logout" method="post">
@@ -285,7 +293,16 @@ const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
     chatInputContainer.style.display = 'none';
   }
 
-
+  function redirectTo(primaryURL, fallbackURL) {
+        var testImage = new Image();
+        testImage.onload = function () {
+            window.location.href = primaryURL;
+        };
+        testImage.onerror = function () {
+            window.location.href = fallbackURL;
+        };
+        testImage.src = primaryURL;
+    }
 
 
   </script>

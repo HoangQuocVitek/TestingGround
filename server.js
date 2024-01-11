@@ -90,16 +90,18 @@ app.get('/public', (req, res) => {
   const isLoggedIn = username !== '';
 
   if (isLoggedIn) {
-    // Emit the presence message only when the user first connects
-    if (!connectedUsers[username]) {
-      io.emit('user presence', username + ' is in public');
-      connectedUsers[username] = true; // Mark the user as connected
-      console.log(username + ' is in public'); // Log in the server console
-    }
+    // Notify other users about the presence of the connected user
+    io.emit('user connected', username + ' is in public');
+    console.log(username + ' is in public'); // Log in the server console
   }
 
   res.render('public', { username, isLoggedIn });
 });
+
+
+
+
+
 
 
 // Root route
@@ -128,19 +130,16 @@ app.post('/login', (req, res) => {
   con.query(sql, [username, password], (error, results, fields) => {
     if (error) {
       console.error(error);
-      return res.status(500).send('Error while authenticating');
+      return res.status(500).json({ success: false, message: 'Error while authenticating' });
     }
 
     if (results.length > 0) {
-      const userId = results[0].idUserDatabase; // Fetch the user ID
-
-
-      
+      // Authentication successful
       req.session.authenticated = true;
-req.session.username = results[0].username;
-console.log(`User ${results[0].username} authenticated from remember me`);
+      req.session.username = results[0].username;
+      console.log(`User ${results[0].username} authenticated from remember me`);
 
-      if (remember) {
+      if (remember)  {
         const series = generateRandomToken();
         const token = generateRandomToken();
 
@@ -166,13 +165,13 @@ console.log(`User ${results[0].username} authenticated from remember me`);
 
       io.emit('user connected', username);
       res.cookie('loggedInUser', username, { maxAge: 900000, httpOnly: true });
-      res.redirect('/');
+      return res.json({ success: true });
     } else {
-      res.redirect('/login');
+      // Authentication failed, return error message
+      return res.json({ success: false, message: 'Wrong username or password. Please try again.' });
     }
   });
 });
-
 // Middleware to check remember me token against the database
 app.use((req, res, next) => {
   const rememberedSeries = req.cookies.rememberedSeries;
@@ -253,6 +252,7 @@ const connectedUsers = {};
 
 io.on('connection', (socket) => {
   socket.on('chat message', (data) => {
+    
     const { message, username } = data;
     const timestamp = new Date();
 
@@ -346,32 +346,6 @@ server.listen(port, () => {
 });
 
 
-
-app.post('/create-chat', (req, res) => {
-  const { name } = req.body;
-
-  if (!name) {
-    return res.status(400).send('Chat name is required');
-  }
-
-  const sql = `
-    CREATE TABLE IF NOT EXISTS ${name} (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      message TEXT,
-      sender VARCHAR(255),
-      sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
-
-  con.query(sql, (error, results, fields) => {
-    if (error) {
-      console.error(error);
-      return res.status(500).send('Error creating chat');
-    }
-    console.log('Chat table created');
-    res.sendStatus(200); // Send success status if table creation is successful
-  });
-});
 
 app.post('/logout', (req, res) => {
   req.session.destroy((err) => {
