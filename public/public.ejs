@@ -102,12 +102,13 @@ button {
 <% if (!isLoggedIn) { %>
   <div class="right-container">
     <a id="registrationLink" href="http://192.168.11.201/registrace">
-      <button class="login-button">Registrace</button>
+        <button class="login-button">Registrace</button>
     </a>
-    <a id="loginLink" href="#" onclick="redirectTo('http://192.168.11.201/login', 'http://localhost/login')">
-      <button class="login-button">Přihlásit se</button>
+    <a id="loginLink" href="http://192.168.11.201/login">
+        <button class="login-button">Přihlásit se</button>
     </a>
-  </div>
+</div>
+
 <% } %>
 <% if (isLoggedIn) { %>
   <p style="color: white;">Welcome, <%= username %>!</p>
@@ -161,7 +162,7 @@ const messages = document.getElementById('messages');
       // Allow sending messages after 3 seconds
       setTimeout(() => {
         canSendMessage = true;
-      }, 0); // 3 seconds cooldown
+      }, 1000); // 3 seconds cooldown
     } else {
       alert('Please type at least one word.');
     }
@@ -200,8 +201,8 @@ const messages = document.getElementById('messages');
 
 
   const li = document.createElement('li');
-  li.innerHTML = chatMessage;
-  messages.insertBefore(li, messages.firstChild);
+li.innerHTML = chatMessage;
+messages.insertBefore(li, messages.firstChild);
   // Check if the message contains an image
   const isImage = message.toLowerCase().includes('<img');
 

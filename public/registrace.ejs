@@ -40,25 +40,14 @@
             return true; // Allow form submission
         }
 
-        function redirectToRegistration(event) {
-            event.preventDefault();
-            window.location.href = "http://localhost/registrace";
-        }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            var loginButton = document.querySelector('.login-button');
-            loginButton.href = "http://localhost/login";
-            
-            var registrationButton = document.querySelector('.btn');
-            registrationButton.addEventListener('click', redirectToRegistration);
-        });
     </script>
 
     
 
 
   
-<a href="http://localhost/login">
+<a href="http://192.168.11.201//login">
     <button class="login-button">Přihlásit se</button>
 </a>
     <div class="center-container">

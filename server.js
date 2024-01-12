@@ -13,9 +13,9 @@ const MySQLStore = require('express-mysql-session')(session);
 
 // MySQL connection configuration
 const sessionStoreOptions = {
-  host: 'localhost',
-  port: '3306',
-  user: 'root',
+  host: '192.168.1.161',
+  port: '3001',
+  user: 'vitek.hoang',
   password: 'BookOfDarkness',
   database: 'vitek.hoang',
 };
@@ -42,11 +42,11 @@ app.set('views', path.join(__dirname, 'public'));
 
 // MySQL connection
 const con = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
+  host: '192.168.1.161',
+  user: 'vitek.hoang',
   password: 'BookOfDarkness',
   database: 'vitek.hoang',
-  port: 3306
+  port: 3001
 });
 con.connect(function(err) {
   if (err) throw err;
@@ -172,6 +172,8 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+
 // Middleware to check remember me token against the database
 app.use((req, res, next) => {
   const rememberedSeries = req.cookies.rememberedSeries;
@@ -248,6 +250,7 @@ function isBase64Image(str) {
   // Regular expression to check if the string is in a base64 format for an image
   return /^data:image\/(jpeg|jpg|gif|png);base64,/.test(str);
 }
+
 const connectedUsers = {};
 
 io.on('connection', (socket) => {
