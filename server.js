@@ -89,12 +89,6 @@ app.get('/public', (req, res) => {
   const username = req.session.username || '';
   const isLoggedIn = username !== '';
 
-  if (isLoggedIn) {
-    // Notify other users about the presence of the connected user
-    io.emit('user connected', username + ' is in public');
-    console.log(username + ' is in public'); // Log in the server console
-  }
-
   res.render('public', { username, isLoggedIn });
 });
 
@@ -361,4 +355,40 @@ app.post('/logout', (req, res) => {
     res.clearCookie('loggedInUser');
     res.redirect('/'); 
   });
+});
+const isAdmin = (req, res, next) => {
+  const username = req.session.username;
+  // Assuming you have a way to identify admin users, for example, checking a specific role in the database
+  // Modify this check based on your authentication logic for admin users
+  if (username === 'admin') {
+    req.isAdmin = true;
+  } else {
+    req.isAdmin = false;
+  }
+  next();
+};
+
+// Middleware to check admin status before allowing /kill command
+app.use('/kill', isAdmin);
+
+// Endpoint to force logout
+app.post('/kill', (req, res) => {
+  if (req.isAdmin) {
+    const { usernameToKill } = req.body;
+    // Add logic to force logout for the specified user, for example, destroying their session
+    // Ensure proper error handling and response based on your application's requirements
+    // ...
+
+    // Emit a message to the public chat indicating that the user has been forcibly logged out by admin
+    io.emit('chat message', {
+      username: 'Admin',
+      message: `${usernameToKill} has been forcibly logged out by admin.`,
+      timestamp: new Date(),
+      isBase64: 0,
+    });
+
+    res.json({ success: true });
+  } else {
+    res.status(403).json({ success: false, message: 'Permission denied' });
+  }
 });
