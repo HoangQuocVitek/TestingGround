@@ -231,31 +231,6 @@ messages.insertBefore(li, messages.firstChild);
 
 
 
-fileInput.addEventListener('change', () => {
-  const selectedFile = fileInput.files[0];
-  if (selectedFile) {
-    const reader = new FileReader();
-
-    // Read the selected file as a data URL
-    reader.readAsDataURL(selectedFile);
-
-    // When the file is loaded, emit a 'chat message' event with the image data
-    reader.onload = function () {
-      const imageData = reader.result;
-      const username = '<%= username %>';
-
-      // Emit the 'chat message' event with the image data
-      socket.emit('chat message', { message: imageData, username });
-      
-      // Clear the file input
-      fileInput.value = '';
-
-      // Disable the button after sending the image
-      sendImageButton.disabled = true;
-    };
-  }
-});
-
 
 
 function handleFileSelect(event) {
@@ -294,7 +269,7 @@ function handleFileSelect(event) {
         // Emit the 'chat message' event with the image data
         socket.emit('chat message', { message: imageData, username });
         fileInput.value = ''; // Clear the file input
-        sendImageButton.disabled = true; // Disable the button after sending the image
+  
       };
     }
   });
@@ -378,7 +353,15 @@ const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
         };
         testImage.src = primaryURL;
     }
+ // Listen for 'user joined' event
+ socket.on('user joined', (username) => {
+      alert(`${username} has joined the chat`);
+    });
 
+    // Listen for 'user left' event
+    socket.on('user left', (username) => {
+      alert(`${username} has left the chat`);
+    });
 
   </script>
   

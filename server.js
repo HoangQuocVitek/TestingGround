@@ -78,11 +78,6 @@ app.get('/registrace', (req, res) => {
   res.render('registrace');
 });
 
-// Login page route
-app.get('/login', (req, res) => {
-  const username = req.session.username || '';
-  res.render('login', { username });
-});
 
 // Public route
 app.get('/public', (req, res) => {
@@ -102,7 +97,7 @@ app.get('/public', (req, res) => {
 app.get('/', (req, res) => {
   const username = req.session.username || '';
   const isLoggedIn = username !== '';
-  res.render('index', { username, isLoggedIn });
+  res.render('indexpass', { username, isLoggedIn });
 });
 
 // Login endpoint
@@ -157,7 +152,9 @@ app.post('/login', (req, res) => {
         res.cookie('rememberedToken', token, { maxAge: 604800000, httpOnly: true });
       }
 
-      io.emit('user connected', username);
+     
+      // Emit user joined event
+      io.emit('user joined', username); // Notify everyone in the chat that this user joined
       res.cookie('loggedInUser', username, { maxAge: 900000, httpOnly: true });
       return res.json({ success: true });
     } else {
@@ -166,7 +163,12 @@ app.post('/login', (req, res) => {
     }
   });
 });
+app.post('/logout', (req, res) => {
+  // Handle logout functionality
 
+  // Emit user left event
+  io.emit('user left', req.session.username); // Notify everyone in the chat that this user left
+});
 
 // Middleware to check remember me token against the database
 app.use((req, res, next) => {
@@ -242,7 +244,7 @@ const getUsernameFromUserId = (userId) => {
 
 function isBase64Image(str) {
   // Regular expression to check if the string is in a base64 format for an image
-  return /^data:image\/(jpeg|jpg|gif|png);base64,/.test(str);
+  return /^data:image\/(jfif|jpeg|jpg|gif|png);base64,/.test(str);
 }
 
 const connectedUsers = {};
@@ -276,18 +278,41 @@ io.on('connection', (socket) => {
       } else {
         // If it's not an image, emit the message as text
         io.emit('chat message', { username, message, timestamp, isBase64 });
-      }
+        socket.on('user joined', (username) => {
+          const timestamp = new Date();
+          const eventType = 'joined';
+          
+          // Insert the event into the database
+          const sql = `INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)`;
+          con.query(sql, [username, eventType, timestamp], (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              return;
+            }
+            console.log('User joined event inserted into the database');
+          });
+        });
+      
+        // When a user leaves
+        socket.on('disconnect', () => {
+          const username = socket.username; // Assuming you're storing the username in the socket object
+          const timestamp = new Date();
+          const eventType = 'left';
+      
+          // Insert the event into the database
+          const sql = `INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)`;
+          con.query(sql, [username, eventType, timestamp], (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              return;
+            }
+            console.log('User left event inserted into the database');
+          });
+        });
+      };
     });
   });
 });
-
-
-
-
-
-
-
-
 
 // Retrieving messages from the database
 app.get('/get-messages', (req, res) => {
@@ -367,28 +392,3 @@ const isAdmin = (req, res, next) => {
   }
   next();
 };
-
-// Middleware to check admin status before allowing /kill command
-app.use('/kill', isAdmin);
-
-// Endpoint to force logout
-app.post('/kill', (req, res) => {
-  if (req.isAdmin) {
-    const { usernameToKill } = req.body;
-    // Add logic to force logout for the specified user, for example, destroying their session
-    // Ensure proper error handling and response based on your application's requirements
-    // ...
-
-    // Emit a message to the public chat indicating that the user has been forcibly logged out by admin
-    io.emit('chat message', {
-      username: 'Admin',
-      message: `${usernameToKill} has been forcibly logged out by admin.`,
-      timestamp: new Date(),
-      isBase64: 0,
-    });
-
-    res.json({ success: true });
-  } else {
-    res.status(403).json({ success: false, message: 'Permission denied' });
-  }
-});
