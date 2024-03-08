@@ -111,8 +111,7 @@ const generateRandomToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
-// Login endpoint
-app.post('/login', (req, res) => {
+app.post('/', (req, res) => {
   const { username, password, remember } = req.body;
 
   const sql = `SELECT * FROM userdatabase WHERE username = ? AND BINARY password = ?`;
@@ -131,13 +130,11 @@ app.post('/login', (req, res) => {
       if (remember)  {
         const series = generateRandomToken();
         const token = generateRandomToken();
-
         // Hash the token before storing it in the database
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
         // Store the series, hashed token, and user ID in the database
         const rememberMeQuery = `
-        INSERT INTO remember_me_tokens (user_id, series, token)
+        INSERT INTO remember_me_tokens (id, user_id, series, token,created_at)
         SELECT idUserDatabase, ?, ? FROM userdatabase WHERE username = ?`;
         con.query(rememberMeQuery, [series, hashedToken, username], (error, results, fields) => {
           if (error) {
@@ -151,10 +148,6 @@ app.post('/login', (req, res) => {
         res.cookie('rememberedSeries', series, { maxAge: 604800000, httpOnly: true });
         res.cookie('rememberedToken', token, { maxAge: 604800000, httpOnly: true });
       }
-
-     
-      // Emit user joined event
-      io.emit('user joined', username); // Notify everyone in the chat that this user joined
       res.cookie('loggedInUser', username, { maxAge: 900000, httpOnly: true });
       return res.json({ success: true });
     } else {
@@ -163,12 +156,7 @@ app.post('/login', (req, res) => {
     }
   });
 });
-app.post('/logout', (req, res) => {
-  // Handle logout functionality
 
-  // Emit user left event
-  io.emit('user left', req.session.username); // Notify everyone in the chat that this user left
-});
 
 // Middleware to check remember me token against the database
 app.use((req, res, next) => {
@@ -241,10 +229,9 @@ const getUsernameFromUserId = (userId) => {
     });
   });
 };
-
 function isBase64Image(str) {
   // Regular expression to check if the string is in a base64 format for an image
-  return /^data:image\/(jfif|jpeg|jpg|gif|png);base64,/.test(str);
+  return /^data:image\/.*;base64,/.test(str);
 }
 
 const connectedUsers = {};
@@ -280,37 +267,12 @@ io.on('connection', (socket) => {
         io.emit('chat message', { username, message, timestamp, isBase64 });
         socket.on('user joined', (username) => {
           const timestamp = new Date();
-          const eventType = 'joined';
           
-          // Insert the event into the database
-          const sql = `INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)`;
-          con.query(sql, [username, eventType, timestamp], (error, results, fields) => {
-            if (error) {
-              console.error(error);
-              return;
-            }
-            console.log('User joined event inserted into the database');
-          });
-        });
-      
-        // When a user leaves
-        socket.on('disconnect', () => {
-          const username = socket.username; // Assuming you're storing the username in the socket object
-          const timestamp = new Date();
-          const eventType = 'left';
-      
-          // Insert the event into the database
-          const sql = `INSERT INTO user_events (username, event_type, timestamp) VALUES (?, ?, ?)`;
-          con.query(sql, [username, eventType, timestamp], (error, results, fields) => {
-            if (error) {
-              console.error(error);
-              return;
-            }
-            console.log('User left event inserted into the database');
-          });
-        });
-      };
-    });
+        
+             });
+         };
+       } 
+     );
   });
 });
 
@@ -367,28 +329,24 @@ server.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
-
-
 app.post('/logout', (req, res) => {
+  if (req.session && req.session.username) {
+    // Emit user left event to notify everyone in the chat
+    io.emit('user left', req.session.username);
+  }
+  
   req.session.destroy((err) => {
     if (err) {
       console.error(err);
       return res.status(500).send('Error logging out');
     }
+
+    // Clear cookies
     res.clearCookie('rememberedSeries');
     res.clearCookie('rememberedToken');
     res.clearCookie('loggedInUser');
-    res.redirect('/'); 
+
+    // Redirect to home page after logout
+    res.redirect('/'); // Redirect to '/'
   });
 });
-const isAdmin = (req, res, next) => {
-  const username = req.session.username;
-  // Assuming you have a way to identify admin users, for example, checking a specific role in the database
-  // Modify this check based on your authentication logic for admin users
-  if (username === 'admin') {
-    req.isAdmin = true;
-  } else {
-    req.isAdmin = false;
-  }
-  next();
-};

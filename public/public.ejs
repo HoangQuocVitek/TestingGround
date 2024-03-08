@@ -38,7 +38,7 @@ body {
   display: flex;
   flex-direction: column-reverse; /* Reverses the order of items */
   max-height: 100%; /* Adjust this to fit your layout */
-  overflow-y: auto; /* Enable vertical scrollbar */
+  overflow-y: auto /* Enable vertical scrollbar */
 }
 
 #chat-form {
@@ -99,23 +99,13 @@ button {
   <a id="loginLink" href="http://192.168.11.201/">
     <button class="login-button">MainMenu</button>
 </a>
-<% if (!isLoggedIn) { %>
-  <div class="right-container">
-    <a id="registrationLink" href="http://192.168.11.201/registrace">
-        <button class="login-button">Registrace</button>
-    </a>
-    <a id="loginLink" href="http://192.168.11.201/login">
-        <button class="login-button">Přihlásit se</button>
-    </a>
-</div>
 
-<% } %>
 <% if (isLoggedIn) { %>
-  <p style="color: white;">EVENT:STYLE THIS WEBSITE</p>
+  <p style="color: white;">Chat season 3</p>
 <% } %>
 
 <div id="public-users">
-  <p style="color: white;">People in Public Chat: <span id="online-users">0</span></p>
+  <p style="color: white;">People in Public Chat: <span id="online-users">3</span></p>
 </div>
 
   <div class="formular-container">
@@ -130,7 +120,7 @@ button {
 
   <div id="chat-input-container" style="display: none;">
     <form id="chat-form">
-      <input id="message-input" autocomplete="off" required maxlength="5000000" />
+      <input id="message-input" autocomplete="off" required maxlength="5000000000" />
       <button type="submit">Poslat</button>
     </form>
   </div>
@@ -202,10 +192,6 @@ const messages = document.getElementById('messages');
   messagesArray.push(chatMessage);
   localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
 
-
-
-
-
   const li = document.createElement('li');
 li.innerHTML = chatMessage;
 messages.insertBefore(li, messages.firstChild);
@@ -219,15 +205,19 @@ messages.insertBefore(li, messages.firstChild);
     const images = li.getElementsByTagName('img');
     for (const image of images) {
       image.addEventListener('load', () => {
-        // Scroll to the bottom after the image is loaded
-        scrollToBottom();
+        if (senderUsername !== '<%= username %>') {
+    // Scroll to the bottom only if the sender is not yourself
+    scrollToBottom();
+  }
       });
     }
   } else {
-    // For regular text messages, scroll to the bottom immediately
+    if (senderUsername !== '<%= username %>') {
+    // Scroll to the bottom only if the sender is not yourself
     scrollToBottom();
   }
-});scrollToBottom();
+  }
+});
 
 
 
@@ -353,7 +343,7 @@ const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
         };
         testImage.src = primaryURL;
     }
- // Listen for 'user joined' event
+
  socket.on('user joined', (username) => {
       alert(`${username} has joined the chat`);
     });
