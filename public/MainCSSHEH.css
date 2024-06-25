@@ -1,0 +1,186 @@
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
+  background-color: #1e1e1e;
+  color: #ddd;
+}
+
+a {
+  color: #ccc;
+}
+
+header {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  background-color: #1e1e1e;
+}
+
+.login-button {
+  margin: 5px;
+  background-color: #555;
+  color: #ddd;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.login-formation {
+  max-width: 400px;
+  width: 100%;
+  padding: 20px;
+  background-color: #333;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 10px 0;
+  border: none;
+  border-radius: 5px;
+  background-color: #444;
+  color: #ddd;
+  border: 1px solid #555;
+}
+
+.show-password-label, .show-password-checkbox {
+  color: #ddd;
+}
+
+.button-container {
+  text-align: center;
+  width: 100%;
+}
+
+.btn {
+  width: 100%;
+  background-color: #6200ee;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #3700b3;
+}
+
+.error-message {
+  color: #cf6679;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+#remember {
+  margin-top: 10px;
+}
+
+#chat-container {
+  display: flex;
+  flex-direction: column-reverse;
+  height: 90%;
+
+  border: 1px solid #555;
+
+  padding: 10px;
+  background-color: #222;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #333;
+}
+
+#chat-container::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background-color: #222;
+}
+
+#chat-container::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 5px;
+}
+
+#chat-container::-webkit-scrollbar-track {
+  background-color: #333;
+  border-radius: 5px;
+}
+
+#messages {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+#chat-form {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+}
+
+#message-input {
+  flex: 1;
+  padding: 5px;
+  margin-left: 5px;
+  background-color: #444;
+  color: #ddd;
+  border: 1px solid #555;
+}
+
+button, #sendImageButton {
+  padding: 6px 10px;
+  cursor: pointer;
+  background-color: #555;
+  color: #ddd;
+  border: none;
+  margin-left: 5px; /* Add margin to create space between input and button */
+}
+
+input[type="file"] {
+  display: none;
+}
+
+#loginLink {
+  text-decoration: none;
+  color: #ddd;
+}
+
+#logoutForm {
+  margin-top: 20px;
+}
+
+#messages img {
+  max-width: 300px;
+  max-height: 300px;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 95%;
+}
+
+.logout-container {
+  margin-top: 20px;
+}

@@ -1,0 +1,97 @@
+/* CSS */
+body {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    font-family: Arial, sans-serif;
+}
+
+.center-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    color: #e0e0e0;
+}
+
+input[type="text"], input[type="password"] {
+    width: 100%; 
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #2e2e2e;
+    color: #e0e0e0;
+}
+
+.button-container {
+    margin-top: 10px;
+}
+
+.button-container .btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    background-color: #555;
+    color: #fff;
+    border-radius: 15px;
+    margin: 10px;
+    width: 100%;
+}
+
+.login-button,
+.register-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 15px;
+    margin: 10px 10px;
+}
+
+.login-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #555;
+    color: #fff;
+}
+
+.register-button {
+    position: absolute;
+    top: 10px;
+    right: 150px;
+    background-color: #555;
+    color: #fff;
+}
+
+.form-group {
+    position: relative;
+}
+
+.show-password-checkbox {
+    position: absolute;
+    top: 36px;
+    right: -13px;
+    transform: translateY(-50%);
+    padding: 10px;
+}
+
+.show-password-label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#showPassword, #showConfirmPassword {
+    margin-left: 10px;
+}
+
+.error-message {
+    color: red;
+}

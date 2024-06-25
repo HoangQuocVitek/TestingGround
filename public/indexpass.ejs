@@ -4,20 +4,15 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="indexpass.css" />
     <title>VEGA</title>
-    <style>
-        /* Add this style for the error message */
-        .error-message {
-            color: red;
-        }
-    </style>
 </head>
-
 <body>
-    <a href="http://192.168.11.201/registrace" onclick="redirectToRegistration(event)"> 
-        <button class="login-button">Registrace</button>
-    </a>
+    <header>
+        <a href="http://192.168.11.201/registrace" onclick="redirectToRegistration(event)">
+            <button class="login-button">Registrace</button>
+        </a>
+    </header>
     
     <div class="center-container">
         <form id="loginForm" method="POST">
@@ -28,7 +23,6 @@
                 <div class="password-input-container">
                     <input type="password" placeholder="password" id="password" name="password" required maxlength="30">
                 </div>
-                <!-- Display error message here -->
                 <div class="error-message" id="error-message"></div>
                 <input type="checkbox" id="showPassword" class="show-password-checkbox" onclick="togglePasswordVisibility('password')">
             </div>
@@ -37,7 +31,7 @@
                 <button type="button" class="btn" onclick="submitLoginForm()">Přihlásit se</button>
             </div>
             
-            <div>
+            <div class="remember-me">
                 <input type="checkbox" id="remember" name="remember">
                 <label for="remember">Remember Me</label>
             </div>
@@ -60,7 +54,6 @@
                 passwordField.type = "password";
             }
     
-            // Update the checkbox state
             showPasswordCheckbox.checked = (passwordField.type === "text");
         }
     
@@ -69,7 +62,6 @@
             var password = document.getElementById("password").value;
             var errorMessageContainer = document.getElementById("error-message");
     
-            // Use AJAX to send the username and password to the server
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "/", true);
             xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -78,10 +70,8 @@
                     if (xhr.status == 200) {
                         var response = JSON.parse(xhr.responseText);
                         if (response.success) {
-                            // Successful login, redirect or perform other actions
                             window.location.href = "/public";
                         } else {
-                            // Display error message in red
                             errorMessageContainer.innerText = response.message;
                             errorMessageContainer.style.color = 'red';
                         }
@@ -91,10 +81,8 @@
                 }
             };
     
-            // Send the username and password to the server
             xhr.send("username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password));
         }
     </script>
-    
 </body>
 </html>

@@ -1,112 +1,14 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>chit chat
-
-  </title>
-  <style>
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #363636;
-}
-
-#chat-container {
-  display: flex;
-  flex-direction: column-reverse; /* Reverse the order of messages */
-  height: 70%;
-  max-height: 70%; /* Set maximum height */
-  width: 80%;
-  border: 1px solid #ccc;
-  overflow-y: auto; /* Enable vertical scrollbar only */
-  margin-bottom: 20px;
-  padding: 10px;
-  color: white;
-}
-
-
-
-#messages {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column-reverse; /* Reverses the order of items */
-  max-height: 100%; /* Adjust this to fit your layout */
-  overflow-y: auto /* Enable vertical scrollbar */
-}
-
-#chat-form {
-  display: flex;
-  width: 100%;
-  align-items: flex-end; /* Aligns the input to the bottom */
-}
-
-#message-input {
-  flex: 1;
-  padding: 5px;
-  margin-right: 5px;
-}
-
-button {
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.center-container {
-  display: flex;
-  justify-content: center;
-  float:right;
-}
-
-.button-container {
-  display: inline-flex; /* Display buttons inline */
-}
-
-.right-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 80%;
-  margin-bottom: 20px; /* To add space between the buttons and the chat container */
-}
-
-.login-button {
-  margin: 5px;
-  /* Add other styles as needed */
-}
-
-
-.formular-container {
-  display: flex;
-  justify-content: flex-end;
-  width: 80%;
-}
-
-.formular-container button {
-  margin-left: 10px; /* Adds space between input and button */
-}
-
-  </style>
-</head>
+  <head>
+    <meta charset="UTF-8">
+    <title>chit chat</title>
+    <link rel="stylesheet" type="text/css" href="MainCSSHEH.css">
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="chat.js"></script>
+  </head>
 
 <body>
-
-  <a id="loginLink" href="http://192.168.11.201/">
-    <button class="login-button">MainMenu</button>
-</a>
-
-<% if (isLoggedIn) { %>
-  <p style="color: white;">Chat season 3</p>
-<% } %>
-
-<div id="public-users">
-  <p style="color: white;">People in Public Chat: <span id="online-users">3</span></p>
-</div>
 
   <div class="formular-container">
     <form id="logoutForm" action="/logout" method="post">
@@ -120,155 +22,149 @@ button {
 
   <div id="chat-input-container" style="display: none;">
     <form id="chat-form">
-      <input id="message-input" autocomplete="off" required maxlength="5000000000" />
-      <button type="submit">Poslat</button>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;">
+      <img src="/SendaImagineButton.png" alt="Send Image" id="sendImageButton" style="width: auto; height: 15px;">
+      <input id="message-input" autocomplete="off" required maxlength="100" />
+      <button type="submit" style="display: none;"></button>
     </form>
+    <div id="image-preview-container" style="display: none;">
+      <img id="image-preview" src="" alt="Image preview" style="max-width: 35%; height: auto;">
+      <button id="cancel-image-button">Cancel</button>
+    </div>
   </div>
-
-  <% if (isLoggedIn) { %>
-    <input type="file" id="fileInput" accept="image/*" style="display: none;">
-    <button id="sendImageButton">Send Image</button>  
-  <% } %>
-  
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
-  const socket = io();
-  const form = document.getElementById('chat-form');
+   const socket = io();
+const form = document.getElementById('chat-form');
 const input = document.getElementById('message-input');
 const messages = document.getElementById('messages');
-  let canSendMessage = true;
+const fileInput = document.getElementById('fileInput');
+const sendImageButton = document.getElementById('sendImageButton');
+const imagePreviewContainer = document.getElementById('image-preview-container');
+const imagePreview = document.getElementById('image-preview');
+const cancelImageButton = document.getElementById('cancel-image-button');
+let canSendMessage = true;
+let imageDataURL = null;
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
+const bannedWords = ['https://akirodic.com/p/jellyfish', '<iframe height="10px" width="100000px" src="https://akirodic.com/p/jellyfish"></iframe>', 'word3'];
 
-    if (!canSendMessage) {
-      alert('Počkej si 1s aby jsi mohl poslat zprávu');
-      return;
-    }
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!canSendMessage) {
+    alert('Počkej si 1s aby jsi mohl poslat zprávu');
+    return;
+  }
+  sendMessage();
+});
 
-    const message = input.value.trim();
-    const username = '<%= username %>';
+function sendMessage() {
+  const message = input.value.trim();
+  const username = '<%= username %>';
 
-    if (message.length > 0) {
-      socket.emit('chat message', { message, username });
-      input.value = '';
-      canSendMessage = false;
+  const containsBannedWord = bannedWords.some(word => message.toLowerCase().includes(word.toLowerCase()));
 
-      // Allow sending messages after 3 seconds
-      setTimeout(() => {
-        canSendMessage = true;
-      }, 1000); // 3 seconds cooldown
-    } else {
-      alert('Please type at least one word.');
-    }
-  });
-  
-  function scrollToBottom() {
+  if (containsBannedWord) {
+    alert('Your message contains banned words. Please remove them.');
+    return;
+  }
+
+  if (imageDataURL) {
+    socket.emit('chat message', { message: `<img src="${imageDataURL}" />`, username });
+    imagePreviewContainer.style.display = 'none';
+    imagePreview.src = '';
+    imageDataURL = null;
+  } else if (message.length > 0) {
+    socket.emit('chat message', { message, username });
+    input.value = '';
+  } else {
+    alert('Please type at least one word.');
+  }
+
+  canSendMessage = false;
+  setTimeout(() => {
+    canSendMessage = true;
+  }, 1000);
+}
+
+function scrollToBottom() {
   messages.scrollTop = messages.scrollHeight;
 }
 
-  
-  socket.on('chat message', async (data) => {
-  const { message, username } = data;
+socket.on('chat message', (data) => {
+  const { message, username, isBase64 } = data;
   const currentDate = new Date();
-
   const day = currentDate.getDate();
   const month = currentDate.getMonth() + 1;
   const hour = currentDate.getHours();
   const minutes = currentDate.getMinutes();
-
   const formattedDate = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${currentDate.getFullYear()} v ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-
   let chatMessage = `
-    <div>
-      <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
-    </div>
-    <div>${message}</div>`; // Including the message directly without checking for URLs
+      <div>
+        <span style="font-weight: bold;">${username}</span> <span style="font-size: 0.8em;">${formattedDate}</span>
+      </div>`;
+  chatMessage += `<div>${message}</div>`;
 
-  // Remaining code unchanged
   const messagesArray = JSON.parse(localStorage.getItem('chatMessages')) || [];
   messagesArray.push(chatMessage);
   localStorage.setItem('chatMessages', JSON.stringify(messagesArray));
 
   const li = document.createElement('li');
-li.innerHTML = chatMessage;
-messages.insertBefore(li, messages.firstChild);
-  // Check if the message contains an image
-  const isImage = message.toLowerCase().includes('<img');
-
+  li.innerHTML = chatMessage;
   messages.insertBefore(li, messages.firstChild);
 
-  if (isImage) {
-    // If the message contains an image, listen for the image load event
-    const images = li.getElementsByTagName('img');
-    for (const image of images) {
-      image.addEventListener('load', () => {
-        if (senderUsername !== '<%= username %>') {
-    // Scroll to the bottom only if the sender is not yourself
-    scrollToBottom();
-  }
-      });
-    }
-  } else {
-    if (senderUsername !== '<%= username %>') {
-    // Scroll to the bottom only if the sender is not yourself
-    scrollToBottom();
-  }
+  scrollToBottom();
+});
+
+sendImageButton.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', () => {
+  const selectedFile = fileInput.files[0];
+  if (selectedFile) {
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedFile);
+    reader.onload = function () {
+      imageDataURL = reader.result;
+      imagePreview.src = imageDataURL;
+      imagePreviewContainer.style.display = 'block';
+      fileInput.value = '';
+    };
   }
 });
 
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
-
-
-
-function handleFileSelect(event) {
-  const fileInput = document.getElementById('fileInput');
-  const sendImageButton = document.getElementById('sendImageButton');
-
-  // Listen for changes in the file input
-  fileInput.addEventListener('change', (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      sendImageButton.disabled = false;
-    } else {
-      sendImageButton.disabled = true;
-    }
-  });
-
-  // Listen for the button click to open file explorer
-  sendImageButton.addEventListener('click', () => {
-    fileInput.click(); // Trigger the file input click event
-  });
-
-  // Listen for the file input change event to send the selected image
-  fileInput.addEventListener('change', () => {
-    const selectedFile = fileInput.files[0];
-    if (selectedFile) {
+input.addEventListener('paste', (e) => {
+  e.preventDefault(); // Prevent default paste behavior
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (const item of items) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile();
       const reader = new FileReader();
-
-      // Read the selected file as a data URL
-      reader.readAsDataURL(selectedFile);
-
-      // When the file is loaded, emit a 'chat message' event with the image data
-      reader.onload = function () {
-        const imageData = reader.result;
-        const username = '<%= username %>';
-
-        // Emit the 'chat message' event with the image data
-        socket.emit('chat message', { message: imageData, username });
-        fileInput.value = ''; // Clear the file input
-  
+      reader.onload = function (event) {
+        imageDataURL = event.target.result;
+        imagePreview.src = imageDataURL;
+        imagePreviewContainer.style.display = 'block';
+        sendMessage(imageDataURL);
       };
+      reader.readAsDataURL(file);
     }
-  });
-}
+  }
+});
 
-// Call the function to set up file input handling
-handleFileSelect();
-
-
+cancelImageButton.addEventListener('click', () => {
+  imagePreviewContainer.style.display = 'none';
+  imagePreview.src = '';
+  imageDataURL = null;
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const messagesContainer = document.getElementById('messages');
@@ -279,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
       messages.forEach(msg => {
         const chatMessage = formatChatMessage(msg.username, msg.message, msg.timestamp);
         const newMessage = createMessageElement(chatMessage);
-        messagesContainer.insertBefore(newMessage, messagesContainer.firstChild); // Insert message at the beginning of the messages container
+        messagesContainer.appendChild(newMessage); // Append message at the bottom
       });
     })
     .catch(error => {
@@ -317,46 +213,40 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return processedMessage;
     }
-    return message; 
+    return message;
   }
 });
 
 
-    
-const isLoggedIn = <%= isLoggedIn %>; // Get the value passed from the server
-  const chatInputContainer = document.getElementById('chat-input-container');
 
-  // Show/hide chat input based on user login status
-  if (isLoggedIn) {
-    chatInputContainer.style.display = 'block';
-  } else {
-    chatInputContainer.style.display = 'none';
-  }
+const isLoggedIn = <%= isLoggedIn %>;
+const chatInputContainer = document.getElementById('chat-input-container');
 
-  function redirectTo(primaryURL, fallbackURL) {
-        var testImage = new Image();
-        testImage.onload = function () {
-            window.location.href = primaryURL;
-        };
-        testImage.onerror = function () {
-            window.location.href = fallbackURL;
-        };
-        testImage.src = primaryURL;
-    }
+if (isLoggedIn) {
+  chatInputContainer.style.display = 'block';
+} else {
+  chatInputContainer.style.display = 'none';
+}
 
- socket.on('user joined', (username) => {
-      alert(`${username} has joined the chat`);
-    });
+function redirectTo(primaryURL, fallbackURL) {
+  var testImage = new Image();
+  testImage.onload = function () {
+    window.location.href = primaryURL;
+  };
+  testImage.onerror = function () {
+    window.location.href = fallbackURL;
+  };
+  testImage.src = primaryURL;
+}
 
-    // Listen for 'user left' event
-    socket.on('user left', (username) => {
-      alert(`${username} has left the chat`);
-    });
+socket.on('user joined', (username) => {
+  alert(`${username} has joined the chat`);
+});
 
-  </script>
-  
-
+socket.on('user left', (username) => {
+  alert(`${username} has left the chat`);
+});
+</script>
 
 </body>
 </html>
-

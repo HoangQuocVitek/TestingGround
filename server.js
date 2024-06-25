@@ -10,6 +10,8 @@ const server = http.createServer(app);
 const io = require('socket.io')(server);
 const crypto = require('crypto');
 const MySQLStore = require('express-mysql-session')(session);
+const compression = require('compression');
+const helmet = require('helmet');
 
 // MySQL connection configuration
 const sessionStoreOptions = {
@@ -160,6 +162,7 @@ app.post('/', (req, res) => {
 
 // Middleware to check remember me token against the database
 app.use((req, res, next) => {
+  const sessionCookie = req.cookies['connect.sid'];
   const rememberedSeries = req.cookies.rememberedSeries;
   const rememberedToken = req.cookies.rememberedToken;
 
@@ -229,16 +232,15 @@ const getUsernameFromUserId = (userId) => {
     });
   });
 };
+
 function isBase64Image(str) {
   // Regular expression to check if the string is in a base64 format for an image
   return /^data:image\/.*;base64,/.test(str);
 }
 
 const connectedUsers = {};
-
 io.on('connection', (socket) => {
   socket.on('chat message', (data) => {
-    
     const { message, username } = data;
     const timestamp = new Date();
 
@@ -256,35 +258,34 @@ io.on('connection', (socket) => {
         console.error(error);
         return;
       }
-      console.log(`${username}: ${isBase64 ? 'Image' : message}`); // Log username and message
 
+      // Emit the message to the clients
       if (isBase64) {
         // If it's an image, emit an <img> tag
         const imgTag = `<img src="${message}" />`;
         io.emit('chat message', { username, message: imgTag, timestamp, isBase64 });
+        console.log(`${username}: Image`); // Log "Username: Image" in the console for image messages
       } else {
         // If it's not an image, emit the message as text
         io.emit('chat message', { username, message, timestamp, isBase64 });
-        socket.on('user joined', (username) => {
-          const timestamp = new Date();
-          
-        
-             });
-         };
-       } 
-     );
+        console.log(`${username}: ${message}`); // Log "Username: Message" in the console for text messages
+      }
+    });
   });
 });
 
-// Retrieving messages from the database
-app.get('/get-messages', (req, res) => {
-  const loggedInUsername = req.session.username;
 
+
+
+// Retrieving messages from the database
+// Database query for retrieving messages
+app.get('/get-messages', (req, res) => {
   const sql = `
     SELECT u.username AS username, pm.message AS message, pm.timestamp AS timestamp, pm.isBase64Image AS isBase64Image
     FROM public_messages pm
     JOIN userdatabase u ON pm.id_username = u.idUserDatabase
-    ORDER BY pm.timestamp`;
+    ORDER BY pm.timestamp DESC
+    LIMIT 100`; // Limit the number of messages fetched
 
   con.query(sql, (error, results, fields) => {
     if (error) {
@@ -302,7 +303,6 @@ app.get('/get-messages', (req, res) => {
       const formattedTimestamp = `${day}/${month} ${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
       if (msg.isBase64Image === 1) {
-        // If it's a Base64 image, convert it to an <img> tag
         const imgTag = `<img src="${msg.message}" />`;
         return { ...msg, message: imgTag, formattedTimestamp, isBase64Image: 1 };
       } else {
@@ -313,6 +313,7 @@ app.get('/get-messages', (req, res) => {
     res.json(formattedResults);
   });
 });
+
 
 // Automatic login middleware
 app.use((req, res, next) => {
@@ -350,3 +351,16 @@ app.post('/logout', (req, res) => {
     res.redirect('/'); // Redirect to '/'
   });
 });
+
+
+app.use(compression()); // Enable gzip compression
+app.use(helmet()); // Secure HTTP headers
+
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d', // Cache static files for 1 day
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
